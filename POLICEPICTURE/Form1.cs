@@ -23,6 +23,14 @@ namespace POLICEPICTURE
         private ErrorProvider errorProvider; // 錯誤提供者
         private ProgressForm progressForm; // 進度表單
 
+        // 定義單位數據結構，用於存儲單位對應關係
+        private Dictionary<string, string[]> unitMapping = new Dictionary<string, string[]>()
+        {
+            { "刑事警察大隊", new string[] { "偵一隊", "偵二隊", "偵三隊" } },
+            { "第一分局", new string[] { "偵查隊", "西門所", "北門所", "樹林頭所", "南寮所", "湳雅所" } },
+            { "第二分局", new string[] { "偵查隊", "東門所", "東勢所", "埔頂所", "關東橋所", "文華所" } },
+            { "第三分局", new string[] { "偵查隊", "香山所", "南門所", "朝山所", "青草湖所", "中華所" } }
+        };
 
         public Form1()
         {
@@ -38,9 +46,34 @@ namespace POLICEPICTURE
             // 訂閱照片管理器的事件
             PhotoManager.Instance.PhotosChanged += PhotoManager_PhotosChanged;
 
+            // 選擇第一個大單位
+            if (lstMainUnit.Items.Count > 0)
+            {
+                lstMainUnit.SelectedIndex = 0;
+            }
+
             // 從設定中填充表單
             if (!string.IsNullOrEmpty(settings.LastUnit))
-                txtUnit.Text = settings.LastUnit;
+            {
+                // 嘗試從保存的完整單位名稱中拆分出大單位和小單位
+                string[] unitParts = settings.LastUnit.Split(new char[] { ' ' }, 2);
+
+                // 設置大單位
+                if (unitParts.Length > 0)
+                {
+                    int index = lstMainUnit.Items.IndexOf(unitParts[0]);
+                    if (index >= 0)
+                    {
+                        lstMainUnit.SelectedIndex = index;
+
+                        // 設置小單位
+                        if (unitParts.Length > 1 && lstSubUnit.Items.Contains(unitParts[1]))
+                        {
+                            lstSubUnit.SelectedItem = unitParts[1];
+                        }
+                    }
+                }
+            }
 
             if (!string.IsNullOrEmpty(settings.LastPhotographer))
                 txtPhotographer.Text = settings.LastPhotographer;
@@ -50,6 +83,51 @@ namespace POLICEPICTURE
 
             // 更新狀態列
             UpdateStatusBar("應用程式就緒");
+        }
+
+        // 大單位選擇變更事件處理方法
+        private void lstMainUnit_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            // 清空小單位列表
+            lstSubUnit.Items.Clear();
+
+            // 獲取選中的大單位
+            string selectedMainUnit = lstMainUnit.SelectedItem as string;
+
+            // 如果選中了有效的大單位，則加載對應的小單位
+            if (!string.IsNullOrEmpty(selectedMainUnit) && unitMapping.ContainsKey(selectedMainUnit))
+            {
+                lstSubUnit.Items.AddRange(unitMapping[selectedMainUnit]);
+
+                // 預選第一個小單位
+                if (lstSubUnit.Items.Count > 0)
+                {
+                    lstSubUnit.SelectedIndex = 0;
+                }
+            }
+
+            // 更新狀態
+            UpdateUnitStatus();
+        }
+
+        // 小單位選擇變更事件處理方法
+        private void lstSubUnit_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            // 更新狀態
+            UpdateUnitStatus();
+        }
+
+        // 更新單位狀態
+        private void UpdateUnitStatus()
+        {
+            // 更新狀態欄顯示當前選擇的單位
+            string mainUnit = lstMainUnit.SelectedItem as string ?? "";
+            string subUnit = lstSubUnit.SelectedItem as string ?? "";
+
+            if (!string.IsNullOrEmpty(mainUnit) && !string.IsNullOrEmpty(subUnit))
+            {
+                UpdateStatusBar($"當前選擇單位: {mainUnit} {subUnit}");
+            }
         }
 
         // 新增以下更新最近檔案選單的方法
@@ -531,7 +609,8 @@ namespace POLICEPICTURE
             }
 
             // 清除所有欄位和照片
-            txtUnit.Text = string.Empty;
+            if (lstMainUnit.Items.Count > 0)
+                lstMainUnit.SelectedIndex = 0; // 重置為第一個選項
             txtCase.Text = string.Empty;
             dtpDateTime.Value = DateTime.Now;
             txtLocation.Text = string.Empty;
@@ -602,8 +681,12 @@ namespace POLICEPICTURE
         /// </summary>
         private bool IsFormDirty()
         {
-            // 如果有輸入內容或照片，則認為有未儲存的工作
-            return !string.IsNullOrWhiteSpace(txtUnit.Text) ||
+            // 如果有選擇了單位、輸入案由內容或照片，則認為有未儲存的工作
+            string mainUnit = lstMainUnit.SelectedItem as string ?? "";
+            string subUnit = lstSubUnit.SelectedItem as string ?? "";
+
+            return !string.IsNullOrEmpty(mainUnit) &&
+                   !string.IsNullOrEmpty(subUnit) ||
                    !string.IsNullOrWhiteSpace(txtCase.Text) ||
                    !string.IsNullOrWhiteSpace(txtLocation.Text) ||
                    PhotoManager.Instance.Count > 0;
@@ -619,12 +702,19 @@ namespace POLICEPICTURE
             bool isValid = true;
             string errorMessage = "";
 
-            // 檢查必填字段
-            if (string.IsNullOrWhiteSpace(txtUnit.Text))
+            // 檢查是否選擇了大單位和小單位
+            if (lstMainUnit.SelectedIndex < 0)
             {
                 isValid = false;
-                errorMessage += "• 請填寫單位欄位\n";
-                if (showErrors) errorProvider.SetError(txtUnit, "單位是必填欄位");
+                errorMessage += "• 請選擇大單位\n";
+                if (showErrors) errorProvider.SetError(lstMainUnit, "請選擇大單位");
+            }
+
+            if (lstSubUnit.SelectedIndex < 0)
+            {
+                isValid = false;
+                errorMessage += "• 請選擇小單位\n";
+                if (showErrors) errorProvider.SetError(lstSubUnit, "請選擇小單位");
             }
 
             if (string.IsNullOrWhiteSpace(txtCase.Text))
@@ -657,13 +747,15 @@ namespace POLICEPICTURE
             return isValid;
         }
 
-        // 修改 SaveDocument 方法，使用 WordInteropHelper 替代 DocHelper
+        // 修改 SaveDocument 方法，收集表單數據時獲取完整單位名稱
         private bool SaveDocument()
         {
             try
             {
                 // 收集表單數據
-                string unit = txtUnit.Text.Trim();
+                string mainUnit = lstMainUnit.SelectedItem as string ?? "";
+                string subUnit = lstSubUnit.SelectedItem as string ?? "";
+                string unit = $"{mainUnit} {subUnit}".Trim();
                 string caseDescription = txtCase.Text.Trim();
                 string time = dtpDateTime.Text.Trim();
                 string address = txtLocation.Text.Trim();

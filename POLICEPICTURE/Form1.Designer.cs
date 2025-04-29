@@ -30,8 +30,10 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.txtUnit = new System.Windows.Forms.TextBox();
-            this.lblUnit = new System.Windows.Forms.Label();
+            this.lstMainUnit = new System.Windows.Forms.ListBox();
+            this.lstSubUnit = new System.Windows.Forms.ListBox();
+            this.lblMainUnit = new System.Windows.Forms.Label();
+            this.lblSubUnit = new System.Windows.Forms.Label();
             this.lblCase = new System.Windows.Forms.Label();
             this.txtCase = new System.Windows.Forms.TextBox();
             this.btnGenerate = new System.Windows.Forms.Button();
@@ -93,27 +95,54 @@
             this.panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pbPhotoPreview)).BeginInit();
             this.SuspendLayout();
-            // 
-            // txtUnit
-            // 
-            this.txtUnit.Location = new System.Drawing.Point(96, 40);
-            this.txtUnit.Name = "txtUnit";
-            this.txtUnit.Size = new System.Drawing.Size(285, 22);
-            this.txtUnit.TabIndex = 0;
-            // 
-            // lblUnit
-            // 
-            this.lblUnit.AutoSize = true;
-            this.lblUnit.Location = new System.Drawing.Point(29, 45);
-            this.lblUnit.Name = "lblUnit";
-            this.lblUnit.Size = new System.Drawing.Size(29, 12);
-            this.lblUnit.TabIndex = 1;
-            this.lblUnit.Text = "單位";
+
+            // 大單位標籤
+            this.lblMainUnit = new System.Windows.Forms.Label();
+            this.lblMainUnit.AutoSize = true;
+            this.lblMainUnit.Location = new System.Drawing.Point(29, 45);
+            this.lblMainUnit.Name = "lblMainUnit";
+            this.lblMainUnit.Size = new System.Drawing.Size(53, 12);
+            this.lblMainUnit.TabIndex = 1;
+            this.lblMainUnit.Text = "大單位";
+
+            // 大單位選擇框
+            this.lstMainUnit = new System.Windows.Forms.ListBox();
+            this.lstMainUnit.FormattingEnabled = true;
+            this.lstMainUnit.ItemHeight = 12;
+            this.lstMainUnit.Items.AddRange(new object[] {
+                "刑事警察大隊",
+                "第一分局",
+                "第二分局",
+                "第三分局"});
+            this.lstMainUnit.Location = new System.Drawing.Point(96, 40);
+            this.lstMainUnit.Name = "lstMainUnit";
+            this.lstMainUnit.Size = new System.Drawing.Size(135, 60);
+            this.lstMainUnit.TabIndex = 0;
+            this.lstMainUnit.SelectedIndexChanged += new System.EventHandler(this.lstMainUnit_SelectedIndexChanged);
+
+            // 小單位標籤
+            this.lblSubUnit = new System.Windows.Forms.Label();
+            this.lblSubUnit.AutoSize = true;
+            this.lblSubUnit.Location = new System.Drawing.Point(29, 115);
+            this.lblSubUnit.Name = "lblSubUnit";
+            this.lblSubUnit.Size = new System.Drawing.Size(53, 12);
+            this.lblSubUnit.TabIndex = 3;
+            this.lblSubUnit.Text = "小單位";
+
+            // 小單位選擇框
+            this.lstSubUnit = new System.Windows.Forms.ListBox();
+            this.lstSubUnit.FormattingEnabled = true;
+            this.lstSubUnit.ItemHeight = 12;
+            this.lstSubUnit.Location = new System.Drawing.Point(96, 110);
+            this.lstSubUnit.Name = "lstSubUnit";
+            this.lstSubUnit.Size = new System.Drawing.Size(135, 60);
+            this.lstSubUnit.TabIndex = 2;
+            this.lstSubUnit.SelectedIndexChanged += new System.EventHandler(this.lstSubUnit_SelectedIndexChanged);
             // 
             // lblCase
             // 
             this.lblCase.AutoSize = true;
-            this.lblCase.Location = new System.Drawing.Point(29, 87);
+            this.lblCase.Location = new System.Drawing.Point(29, 185);
             this.lblCase.Name = "lblCase";
             this.lblCase.Size = new System.Drawing.Size(29, 12);
             this.lblCase.TabIndex = 2;
@@ -121,7 +150,7 @@
             // 
             // txtCase
             // 
-            this.txtCase.Location = new System.Drawing.Point(96, 82);
+            this.txtCase.Location = new System.Drawing.Point(96, 180);
             this.txtCase.Name = "txtCase";
             this.txtCase.Size = new System.Drawing.Size(285, 22);
             this.txtCase.TabIndex = 3;
@@ -248,8 +277,8 @@
             // 
             // tabControl
             // 
-            this.tabControl.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
+            this.tabControl.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+            | System.Windows.Forms.AnchorStyles.Left)
             | System.Windows.Forms.AnchorStyles.Right)));
             this.tabControl.Controls.Add(this.tabPageBasicInfo);
             this.tabControl.Controls.Add(this.tabPagePhotos);
@@ -262,8 +291,10 @@
             // tabPageBasicInfo
             // 
             this.tabPageBasicInfo.Controls.Add(this.groupBox1);
-            this.tabPageBasicInfo.Controls.Add(this.lblUnit);
-            this.tabPageBasicInfo.Controls.Add(this.txtUnit);
+            this.tabPageBasicInfo.Controls.Add(this.lblMainUnit);
+            this.tabPageBasicInfo.Controls.Add(this.lstMainUnit);
+            this.tabPageBasicInfo.Controls.Add(this.lblSubUnit);
+            this.tabPageBasicInfo.Controls.Add(this.lstSubUnit);
             this.tabPageBasicInfo.Controls.Add(this.lblCase);
             this.tabPageBasicInfo.Controls.Add(this.txtCase);
             this.tabPageBasicInfo.Location = new System.Drawing.Point(4, 22);
@@ -276,7 +307,7 @@
             // 
             // groupBox1
             // 
-            this.groupBox1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            this.groupBox1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
             | System.Windows.Forms.AnchorStyles.Right)));
             this.groupBox1.Controls.Add(this.lblDateTime);
             this.groupBox1.Controls.Add(this.dtpDateTime);
@@ -284,7 +315,7 @@
             this.groupBox1.Controls.Add(this.txtLocation);
             this.groupBox1.Controls.Add(this.lblPhotographer);
             this.groupBox1.Controls.Add(this.txtPhotographer);
-            this.groupBox1.Location = new System.Drawing.Point(18, 136);
+            this.groupBox1.Location = new System.Drawing.Point(18, 220);
             this.groupBox1.Name = "groupBox1";
             this.groupBox1.Size = new System.Drawing.Size(466, 169);
             this.groupBox1.TabIndex = 4;
@@ -410,7 +441,7 @@
             // 
             // txtPhotoDescription
             // 
-            this.txtPhotoDescription.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            this.txtPhotoDescription.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
             | System.Windows.Forms.AnchorStyles.Right)));
             this.txtPhotoDescription.Enabled = false;
             this.txtPhotoDescription.Location = new System.Drawing.Point(65, 15);
@@ -453,8 +484,8 @@
             // 
             // pbPhotoPreview
             // 
-            this.pbPhotoPreview.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
+            this.pbPhotoPreview.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+            | System.Windows.Forms.AnchorStyles.Left)
             | System.Windows.Forms.AnchorStyles.Right)));
             this.pbPhotoPreview.BackColor = System.Drawing.Color.White;
             this.pbPhotoPreview.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
@@ -525,8 +556,12 @@
 
         #endregion
 
-        private System.Windows.Forms.TextBox txtUnit;
-        private System.Windows.Forms.Label lblUnit;
+        // 修改：移除原有的 txtUnit，改為 ListBox 控制項
+        private System.Windows.Forms.ListBox lstMainUnit;
+        private System.Windows.Forms.ListBox lstSubUnit;
+        private System.Windows.Forms.Label lblMainUnit;
+        private System.Windows.Forms.Label lblSubUnit;
+
         private System.Windows.Forms.Label lblCase;
         private System.Windows.Forms.TextBox txtCase;
         private System.Windows.Forms.Button btnGenerate;

@@ -20,6 +20,26 @@ namespace POLICEPICTURE
         private const int PROGRESS_REPORT_INTERVAL = 10;
 
         /// <summary>
+        /// 表格信息類，用於保存表格和其中的 %%PICTURE%% 標記位置
+        /// </summary>
+        public class TableInfo
+        {
+            public Table Table { get; set; }
+            public List<CellMarkerInfo> PictureMarkers { get; set; } = new List<CellMarkerInfo>();
+        }
+
+        /// <summary>
+        /// 單元格標記信息類，用於保存標記所在的單元格和位置
+        /// </summary>
+        public class CellMarkerInfo
+        {
+            public Cell Cell { get; set; }
+            public int Row { get; set; }
+            public int Column { get; set; }
+            public Range MarkerRange { get; set; }
+        }
+
+        /// <summary>
         /// 從模板生成文檔並處理照片
         /// </summary>
         public static async System.Threading.Tasks.Task<bool> GenerateDocumentAsync(
@@ -36,87 +56,87 @@ namespace POLICEPICTURE
             // 使用 Task.Run 在後台線程執行耗時操作
             return await System.Threading.Tasks.Task.Run(() =>
             {
-                // Word 應用實例、文檔和範圍變數
-                Microsoft.Office.Interop.Word.Application wordApp = null;
-                Microsoft.Office.Interop.Word.Document doc = null;
-                object missing = System.Reflection.Missing.Value;
+            // Word 應用實例、文檔和範圍變數
+            Microsoft.Office.Interop.Word.Application wordApp = null;
+            Microsoft.Office.Interop.Word.Document doc = null;
+            object missing = System.Reflection.Missing.Value;
 
-                try
+            try
+            {
+                // 報告進度 - 10%
+                progressReport?.Invoke(10, "準備生成文檔...");
+
+                // 檢查照片數量，提前顯示警告
+                if (photos.Count > 100)
                 {
-                    // 報告進度 - 10%
-                    progressReport?.Invoke(10, "準備生成文檔...");
+                    Logger.Log($"警告：處理大量照片({photos.Count}張)可能需要較長時間", Logger.LogLevel.Warning);
+                    progressReport?.Invoke(10, $"準備處理 {photos.Count} 張照片，這可能需要較長時間...");
+                }
 
-                    // 檢查照片數量，提前顯示警告
-                    if (photos.Count > 100)
+                // 驗證模板路徑
+                if (string.IsNullOrWhiteSpace(templatePath) || !File.Exists(templatePath))
+                {
+                    throw new FileNotFoundException("找不到範本檔案", templatePath);
+                }
+
+                // 確保輸出目錄存在
+                string outputDir = Path.GetDirectoryName(outputPath);
+                if (!Directory.Exists(outputDir))
+                {
+                    Directory.CreateDirectory(outputDir);
+                }
+
+                // 報告進度 - 20%
+                progressReport?.Invoke(20, "初始化 Word 應用...");
+
+                // 創建 Word 應用實例
+                wordApp = new Microsoft.Office.Interop.Word.Application();
+                wordApp.Visible = false; // 隱藏 Word 應用
+
+                // 報告進度 - 25%
+                progressReport?.Invoke(25, "加載範本文檔...");
+
+                // 優化：設置打開文檔選項以提高性能
+                object readOnly = false;
+                object isVisible = false;
+                object openAndRepair = false;
+
+                // 打開模板文件，使用優化參數
+                doc = wordApp.Documents.Open(
+                    templatePath,
+                    ReadOnly: readOnly,
+                    Visible: isVisible,
+                    OpenAndRepair: openAndRepair);
+
+                // 報告進度 - 30%
+                progressReport?.Invoke(30, "填充文檔內容...");
+
+                // 格式化時間，只保留年月日
+                string formattedTime = string.Empty;
+                if (!string.IsNullOrEmpty(time))
+                {
+                    try
                     {
-                        Logger.Log($"警告：處理大量照片({photos.Count}張)可能需要較長時間", Logger.LogLevel.Warning);
-                        progressReport?.Invoke(10, $"準備處理 {photos.Count} 張照片，這可能需要較長時間...");
-                    }
-
-                    // 驗證模板路徑
-                    if (string.IsNullOrWhiteSpace(templatePath) || !File.Exists(templatePath))
-                    {
-                        throw new FileNotFoundException("找不到範本檔案", templatePath);
-                    }
-
-                    // 確保輸出目錄存在
-                    string outputDir = Path.GetDirectoryName(outputPath);
-                    if (!Directory.Exists(outputDir))
-                    {
-                        Directory.CreateDirectory(outputDir);
-                    }
-
-                    // 報告進度 - 20%
-                    progressReport?.Invoke(20, "初始化 Word 應用...");
-
-                    // 創建 Word 應用實例
-                    wordApp = new Microsoft.Office.Interop.Word.Application();
-                    wordApp.Visible = false; // 隱藏 Word 應用
-
-                    // 報告進度 - 25%
-                    progressReport?.Invoke(25, "加載範本文檔...");
-
-                    // 優化：設置打開文檔選項以提高性能
-                    object readOnly = false;
-                    object isVisible = false;
-                    object openAndRepair = false;
-
-                    // 打開模板文件，使用優化參數
-                    doc = wordApp.Documents.Open(
-                        templatePath,
-                        ReadOnly: readOnly,
-                        Visible: isVisible,
-                        OpenAndRepair: openAndRepair);
-
-                    // 報告進度 - 30%
-                    progressReport?.Invoke(30, "填充文檔內容...");
-
-                    // 格式化時間，只保留年月日
-                    string formattedTime = string.Empty;
-                    if (!string.IsNullOrEmpty(time))
-                    {
-                        try
+                        // 嘗試解析時間字符串
+                        if (DateTime.TryParse(time, out DateTime dateTime))
                         {
-                            // 嘗試解析時間字符串
-                            if (DateTime.TryParse(time, out DateTime dateTime))
-                            {
-                                // 只顯示年月日
-                                formattedTime = dateTime.ToString("yyyy年MM月dd日");
-                            }
-                            else
-                            {
-                                // 如果無法解析，則使用原始字符串
-                                formattedTime = time;
-                            }
+                            // 只顯示年月日
+                            formattedTime = dateTime.ToString("yyyy年MM月dd日");
                         }
-                        catch
+                        else
                         {
+                            // 如果無法解析，則使用原始字符串
                             formattedTime = time;
                         }
                     }
+                    catch
+                    {
+                        formattedTime = time;
+                    }
+                }
 
-                    // 批量替換文檔中的佔位符，提高性能
-                    Dictionary<string, string> replacements = new Dictionary<string, string>
+                // 批量替換文檔中的佔位符，提高性能
+                Dictionary<string, string> replacements = new Dictionary<string, string>
                     {
                         { "%%UNIT%%", unit ?? string.Empty },
                         { "%%CASE%%", caseDesc ?? string.Empty },
@@ -130,41 +150,41 @@ namespace POLICEPICTURE
                         { "%%NUMBER%%", string.Empty }
                     };
 
-                    // 批量替換所有佔位符
-                    BatchReplaceTextInDocument(doc, replacements);
+                // 批量替換所有佔位符
+                BatchReplaceTextInDocument(doc, replacements);
 
-                    // 報告進度 - 40%
-                    progressReport?.Invoke(40, "查找照片標記和表格...");
+                // 報告進度 - 40%
+                progressReport?.Invoke(40, "查找照片標記和表格...");
 
-                    // 使用新方法查找包含 %%PICTURE%% 標記的表格
-                    TableInfo templateTableInfo = FindTableWithPictureMarkers(doc);
+                // 使用新方法查找包含 %%PICTURE%% 標記的表格
+                TableInfo templateTableInfo = FindTableWithPictureMarkers(doc);
 
-                    if (templateTableInfo != null && templateTableInfo.Table != null && templateTableInfo.PictureMarkers.Count > 0)
+                if (templateTableInfo != null && templateTableInfo.Table != null && templateTableInfo.PictureMarkers.Count > 0)
+                {
+                    Logger.Log($"找到包含 %%PICTURE%% 標記的表格，標記數量: {templateTableInfo.PictureMarkers.Count}", Logger.LogLevel.Info);
+
+                    // 如果有照片並且找到了標記表格，處理照片
+                    if (photos.Count > 0)
                     {
-                        Logger.Log($"找到包含 %%PICTURE%% 標記的表格，標記數量: {templateTableInfo.PictureMarkers.Count}", Logger.LogLevel.Info);
+                        // 報告進度 - 50%
+                        progressReport?.Invoke(50, "處理照片...");
 
-                        // 如果有照片並且找到了標記表格，處理照片
-                        if (photos.Count > 0)
-                        {
-                            // 報告進度 - 50%
-                            progressReport?.Invoke(50, "處理照片...");
-
-                            // 使用找到的表格和標記處理照片 - 優化版本
-                            ProcessPhotosInTemplateTableOptimized(doc, templateTableInfo, photos, progressReport);
-                        }
+                        // 使用找到的表格和標記處理照片 - 優化版本
+                        ProcessPhotosInTemplateTableOptimized(doc, templateTableInfo, photos, progressReport);
                     }
-                    else
+                }
+                else
+                {
+                    Logger.Log("未找到包含 %%PICTURE%% 標記的表格，使用替代方法", Logger.LogLevel.Warning);
+
+                    // 如果沒有找到表格但有照片需要處理，使用替代方法
+                    if (photos.Count > 0)
                     {
-                        Logger.Log("未找到包含 %%PICTURE%% 標記的表格，使用替代方法", Logger.LogLevel.Warning);
-
-                        // 如果沒有找到表格但有照片需要處理，使用替代方法
-                        if (photos.Count > 0)
-                        {
-                            // 報告進度 - 45%
-                            progressReport?.Invoke(45, "使用替代方法處理照片...");
-                            ProcessPhotosAlternativeOptimized(doc, photos, progressReport);
-                        }
+                        // 報告進度 - 45%
+                        progressReport?.Invoke(45, "使用替代方法處理照片...");
+                        ProcessPhotosAlternativeOptimized(doc, photos, progressReport);
                     }
+                }
 
                     // 最後，刪除文檔中任何剩餘的 %%PICTURE%% 標記
                     ReplaceTextInDocument(doc, "%%PICTURE%%", string.Empty);
@@ -205,11 +225,7 @@ namespace POLICEPICTURE
                     GC.Collect();
                     GC.WaitForPendingFinalizers();
                 }
-            }
-            catch (Exception ex)
-            {
-                Logger.Log($"替換文本時發生錯誤: {ex.Message}", Logger.LogLevel.Error);
-            }
+            });
         }
 
         /// <summary>
@@ -671,145 +687,129 @@ namespace POLICEPICTURE
                 return false;
             }
         }
-    });
-        }
 
-/// <summary>
-/// 表格信息類，用於保存表格和其中的 %%PICTURE%% 標記位置
-/// </summary>
-private class TableInfo
-{
-    public Table Table { get; set; }
-    public List<CellMarkerInfo> PictureMarkers { get; set; } = new List<CellMarkerInfo>();
-}
-
-/// <summary>
-/// 單元格標記信息類，用於保存標記所在的單元格和位置
-/// </summary>
-private class CellMarkerInfo
-{
-    public Cell Cell { get; set; }
-    public int Row { get; set; }
-    public int Column { get; set; }
-    public Range MarkerRange { get; set; }
-}
-
-/// <summary>
-/// 批量替換文檔中的文本（優化版本）
-/// </summary>
-private static void BatchReplaceTextInDocument(Document doc, Dictionary<string, string> replacements)
-{
-    if (doc == null || replacements == null || replacements.Count == 0)
-    {
-        return;
-    }
-
-    try
-    {
-        // 嘗試使用標準方法進行替換
-        try
+        /// <summary>
+        /// 批量替換文檔中的文本（優化版本）
+        /// </summary>
+        private static void BatchReplaceTextInDocument(Document doc, Dictionary<string, string> replacements)
         {
-            Range range = doc.Content;
-
-            // 對所有替換項逐一進行處理
-            foreach (var replacement in replacements)
+            if (doc == null || replacements == null || replacements.Count == 0)
             {
-                range.Find.ClearFormatting();
-                range.Find.Replacement.ClearFormatting();
-                range.Find.Text = replacement.Key;
-                range.Find.Replacement.Text = replacement.Value;
-                range.Find.Execute(Replace: WdReplace.wdReplaceAll);
+                return;
             }
-        }
-        catch (Exception ex)
-        {
-            Logger.Log($"使用標準替換方法失敗: {ex.Message}，嘗試替代方法", Logger.LogLevel.Warning);
 
-            // 使用替代方法逐段替換
-            foreach (var replacement in replacements)
+            try
             {
-                // 替換段落中的文本
-                foreach (Paragraph para in doc.Paragraphs)
+                // 嘗試使用標準方法進行替換
+                try
                 {
-                    if (para.Range.Text.Contains(replacement.Key))
+                    Range range = doc.Content;
+
+                    // 對所有替換項逐一進行處理
+                    foreach (var replacement in replacements)
                     {
-                        para.Range.Text = para.Range.Text.Replace(replacement.Key, replacement.Value);
+                        range.Find.ClearFormatting();
+                        range.Find.Replacement.ClearFormatting();
+                        range.Find.Text = replacement.Key;
+                        range.Find.Replacement.Text = replacement.Value;
+                        range.Find.Execute(Replace: WdReplace.wdReplaceAll);
                     }
                 }
-
-                // 替換表格中的文本
-                foreach (Table table in doc.Tables)
+                catch (Exception ex)
                 {
-                    foreach (Row row in table.Rows)
+                    Logger.Log($"使用標準替換方法失敗: {ex.Message}，嘗試替代方法", Logger.LogLevel.Warning);
+
+                    // 使用替代方法逐段替換
+                    foreach (var replacement in replacements)
                     {
-                        foreach (Cell cell in row.Cells)
+                        // 替換段落中的文本
+                        foreach (Paragraph para in doc.Paragraphs)
                         {
-                            if (cell.Range.Text.Contains(replacement.Key))
+                            if (para.Range.Text.Contains(replacement.Key))
                             {
-                                cell.Range.Text = cell.Range.Text.Replace(replacement.Key, replacement.Value);
+                                para.Range.Text = para.Range.Text.Replace(replacement.Key, replacement.Value);
+                            }
+                        }
+
+                        // 替換表格中的文本
+                        foreach (Table table in doc.Tables)
+                        {
+                            foreach (Row row in table.Rows)
+                            {
+                                foreach (Cell cell in row.Cells)
+                                {
+                                    if (cell.Range.Text.Contains(replacement.Key))
+                                    {
+                                        cell.Range.Text = cell.Range.Text.Replace(replacement.Key, replacement.Value);
+                                    }
+                                }
                             }
                         }
                     }
                 }
             }
-        }
-    }
-    catch (Exception ex)
-    {
-        Logger.Log($"批量替換文本時發生錯誤: {ex.Message}", Logger.LogLevel.Error);
-    }
-}
-
-/// <summary>
-/// 在文檔中替換指定文本
-/// </summary>
-private static void ReplaceTextInDocument(Document doc, string findText, string replaceText)
-{
-    if (doc == null || string.IsNullOrEmpty(findText))
-    {
-        return;
-    }
-
-    try
-    {
-        // 嘗試使用常規 Find 方法
-        try
-        {
-            Range range = doc.Content;
-            range.Find.ClearFormatting();
-            range.Find.Replacement.ClearFormatting();
-            range.Find.Text = findText;
-            range.Find.Replacement.Text = replaceText;
-            range.Find.Execute(Replace: WdReplace.wdReplaceAll);
-        }
-        catch (Exception ex)
-        {
-            Logger.Log($"使用標準替換方法失敗: {ex.Message}，嘗試替代方法", Logger.LogLevel.Warning);
-
-            // 如果標準方法失敗，使用替代方法逐段替換
-
-            // 替換段落中的文本
-            foreach (Paragraph para in doc.Paragraphs)
+            catch (Exception ex)
             {
-                if (para.Range.Text.Contains(findText))
-                {
-                    para.Range.Text = para.Range.Text.Replace(findText, replaceText);
-                }
+                Logger.Log($"批量替換文本時發生錯誤: {ex.Message}", Logger.LogLevel.Error);
+            }
+        }
+
+        /// <summary>
+        /// 在文檔中替換指定文本
+        /// </summary>
+        private static void ReplaceTextInDocument(Document doc, string findText, string replaceText)
+        {
+            if (doc == null || string.IsNullOrEmpty(findText))
+            {
+                return;
             }
 
-            // 替換表格中的文本
-            foreach (Table table in doc.Tables)
+            try
             {
-                foreach (Row row in table.Rows)
+                // 嘗試使用常規 Find 方法
+                try
                 {
-                    foreach (Cell cell in row.Cells)
+                    Range range = doc.Content;
+                    range.Find.ClearFormatting();
+                    range.Find.Replacement.ClearFormatting();
+                    range.Find.Text = findText;
+                    range.Find.Replacement.Text = replaceText;
+                    range.Find.Execute(Replace: WdReplace.wdReplaceAll);
+                }
+                catch (Exception ex)
+                {
+                    Logger.Log($"使用標準替換方法失敗: {ex.Message}，嘗試替代方法", Logger.LogLevel.Warning);
+
+                    // 如果標準方法失敗，使用替代方法逐段替換
+                    // 替換段落中的文本
+                    foreach (Paragraph para in doc.Paragraphs)
                     {
-                        if (cell.Range.Text.Contains(findText))
+                        if (para.Range.Text.Contains(findText))
                         {
-                            cell.Range.Text = cell.Range.Text.Replace(findText, replaceText);
+                            para.Range.Text = para.Range.Text.Replace(findText, replaceText);
+                        }
+                    }
+
+                    // 替換表格中的文本
+                    foreach (Table table in doc.Tables)
+                    {
+                        foreach (Row row in table.Rows)
+                        {
+                            foreach (Cell cell in row.Cells)
+                            {
+                                if (cell.Range.Text.Contains(findText))
+                                {
+                                    cell.Range.Text = cell.Range.Text.Replace(findText, replaceText);
+                                }
+                            }
                         }
                     }
                 }
             }
+            catch (Exception ex)
+            {
+                Logger.Log($"替換文本時發生錯誤: {ex.Message}", Logger.LogLevel.Error);
+            }
         }
     }
+}
