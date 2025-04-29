@@ -726,7 +726,6 @@ namespace POLICEPICTURE
                 // 收集表單數據
                 string mainUnit = cmbMainUnit.SelectedItem as string ?? "";
                 string subUnit = cmbSubUnit.SelectedItem as string ?? "";
-                // 修改：直接使用主單位和子單位的組合，不再添加"新竹市警察局"前綴
                 string unit = $"{mainUnit} {subUnit}".Trim();
                 string caseDescription = txtCase.Text.Trim();
                 string time = dtpDateTime.Text.Trim();
@@ -1239,6 +1238,11 @@ namespace POLICEPICTURE
                     }
                 }
             }
+        }
+
+        private void tblUnitLayout_Paint(object sender, PaintEventArgs e)
+        {
+
         }
     }
 }

@@ -31,16 +31,10 @@
         private void InitializeComponent()
         {
             this.tblUnitLayout = new System.Windows.Forms.TableLayoutPanel();
-            this.tblUnitLayout.Dock = System.Windows.Forms.DockStyle.None;
-            this.tblUnitLayout.Location = new System.Drawing.Point(29, 45);
-            this.tblUnitLayout.Name = "tblUnitLayout";
-            this.tblUnitLayout.Size = new System.Drawing.Size(350, 30);
-            this.tblUnitLayout.ColumnCount = 4;
-            this.tblUnitLayout.RowCount = 1;
-            this.tblUnitLayout.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.AutoSize));
-            this.tblUnitLayout.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
-            this.tblUnitLayout.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.AutoSize));
-            this.tblUnitLayout.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.lblMainUnit = new System.Windows.Forms.Label();
+            this.cmbMainUnit = new System.Windows.Forms.ComboBox();
+            this.lblSubUnit = new System.Windows.Forms.Label();
+            this.cmbSubUnit = new System.Windows.Forms.ComboBox();
             this.lblCase = new System.Windows.Forms.Label();
             this.txtCase = new System.Windows.Forms.TextBox();
             this.btnGenerate = new System.Windows.Forms.Button();
@@ -69,6 +63,7 @@
             this.txtPhotographer = new System.Windows.Forms.TextBox();
             this.tabPagePhotos = new System.Windows.Forms.TabPage();
             this.splitContainer = new System.Windows.Forms.SplitContainer();
+            this.lblPhotoInfo = new System.Windows.Forms.Label();
             this.lvPhotos = new System.Windows.Forms.ListView();
             this.colFilename = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.colDate = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
@@ -80,21 +75,13 @@
             this.pbPhotoPreview = new System.Windows.Forms.PictureBox();
             this.lblPreview = new System.Windows.Forms.Label();
             this.btnPreview = new System.Windows.Forms.Button();
+            this.tblUnitLayout.SuspendLayout();
             this.menuStrip.SuspendLayout();
             this.statusStrip.SuspendLayout();
             this.tabControl.SuspendLayout();
             this.tabPageBasicInfo.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.tabPagePhotos.SuspendLayout();
-            this.lblPhotoInfo = new System.Windows.Forms.Label();
-            this.lblPhotoInfo.AutoSize = true;
-            this.lblPhotoInfo.Location = new System.Drawing.Point(3, 370);
-            this.lblPhotoInfo.Name = "lblPhotoInfo";
-            this.lblPhotoInfo.Size = new System.Drawing.Size(65, 12);
-            this.lblPhotoInfo.TabIndex = 2;
-            this.lblPhotoInfo.Text = "";
-
-            this.splitContainer.Panel2.Controls.Add(this.lblPhotoInfo);
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer)).BeginInit();
             this.splitContainer.Panel1.SuspendLayout();
             this.splitContainer.Panel2.SuspendLayout();
@@ -102,50 +89,71 @@
             this.panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pbPhotoPreview)).BeginInit();
             this.SuspendLayout();
-
-            // 大單位標籤
-            this.lblMainUnit = new System.Windows.Forms.Label();
+            // 
+            // tblUnitLayout
+            // 
+            this.tblUnitLayout.ColumnCount = 4;
+            this.tblUnitLayout.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
+            this.tblUnitLayout.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.tblUnitLayout.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
+            this.tblUnitLayout.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.tblUnitLayout.Controls.Add(this.cmbMainUnit, 1, 0);
+            this.tblUnitLayout.Controls.Add(this.cmbSubUnit, 3, 0);
+            this.tblUnitLayout.Location = new System.Drawing.Point(29, 45);
+            this.tblUnitLayout.Name = "tblUnitLayout";
+            this.tblUnitLayout.RowCount = 1;
+            this.tblUnitLayout.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
+            this.tblUnitLayout.Size = new System.Drawing.Size(350, 30);
+            this.tblUnitLayout.TabIndex = 0;
+            this.tblUnitLayout.Paint += new System.Windows.Forms.PaintEventHandler(this.tblUnitLayout_Paint);
+            // 
+            // lblMainUnit
+            // 
+            this.lblMainUnit.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
             this.lblMainUnit.AutoSize = true;
+            this.lblMainUnit.Location = new System.Drawing.Point(3, 9);
             this.lblMainUnit.Name = "lblMainUnit";
-            this.lblMainUnit.Size = new System.Drawing.Size(53, 12);
+            this.lblMainUnit.Size = new System.Drawing.Size(29, 12);
+            this.lblMainUnit.TabIndex = 0;
             this.lblMainUnit.Text = "機關";
-            this.lblMainUnit.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
-            this.tblUnitLayout.Controls.Add(this.lblMainUnit, 0, 0);
-
-            // 大單位下拉選單
-            this.cmbMainUnit = new System.Windows.Forms.ComboBox();
+            // 
+            // cmbMainUnit
+            // 
+            this.cmbMainUnit.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
             this.cmbMainUnit.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbMainUnit.FormattingEnabled = true;
             this.cmbMainUnit.Items.AddRange(new object[] {
-    "刑事警察大隊",
-    "第一分局",
-    "第二分局",
-    "第三分局"});
+            "刑事警察大隊",
+            "第一分局",
+            "第二分局",
+            "第三分局"});
+            this.cmbMainUnit.Location = new System.Drawing.Point(3, 5);
             this.cmbMainUnit.Name = "cmbMainUnit";
-            this.cmbMainUnit.Size = new System.Drawing.Size(135, 20);
-            this.cmbMainUnit.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            this.cmbMainUnit.Size = new System.Drawing.Size(169, 20);
+            this.cmbMainUnit.TabIndex = 1;
             this.cmbMainUnit.SelectedIndexChanged += new System.EventHandler(this.cmbMainUnit_SelectedIndexChanged);
-            this.tblUnitLayout.Controls.Add(this.cmbMainUnit, 1, 0);
-
-            // 小單位標籤
-            this.lblSubUnit = new System.Windows.Forms.Label();
+            // 
+            // lblSubUnit
+            // 
+            this.lblSubUnit.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
             this.lblSubUnit.AutoSize = true;
+            this.lblSubUnit.Location = new System.Drawing.Point(181, 9);
             this.lblSubUnit.Margin = new System.Windows.Forms.Padding(10, 0, 3, 0);
             this.lblSubUnit.Name = "lblSubUnit";
-            this.lblSubUnit.Size = new System.Drawing.Size(53, 12);
+            this.lblSubUnit.Size = new System.Drawing.Size(29, 12);
+            this.lblSubUnit.TabIndex = 2;
             this.lblSubUnit.Text = "單位";
-            this.lblSubUnit.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
-            this.tblUnitLayout.Controls.Add(this.lblSubUnit, 2, 0);
-
-            // 小單位下拉選單
-            this.cmbSubUnit = new System.Windows.Forms.ComboBox();
+            // 
+            // cmbSubUnit
+            // 
+            this.cmbSubUnit.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
             this.cmbSubUnit.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbSubUnit.FormattingEnabled = true;
+            this.cmbSubUnit.Location = new System.Drawing.Point(178, 5);
             this.cmbSubUnit.Name = "cmbSubUnit";
-            this.cmbSubUnit.Size = new System.Drawing.Size(135, 20);
-            this.cmbSubUnit.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            this.cmbSubUnit.Size = new System.Drawing.Size(169, 20);
+            this.cmbSubUnit.TabIndex = 3;
             this.cmbSubUnit.SelectedIndexChanged += new System.EventHandler(this.cmbSubUnit_SelectedIndexChanged);
-            this.tblUnitLayout.Controls.Add(this.cmbSubUnit, 3, 0);
             // 
             // lblCase
             // 
@@ -203,7 +211,7 @@
             // 
             this.menuFileNew.Name = "menuFileNew";
             this.menuFileNew.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.N)));
-            this.menuFileNew.Size = new System.Drawing.Size(180, 22);
+            this.menuFileNew.Size = new System.Drawing.Size(167, 22);
             this.menuFileNew.Text = "新增";
             this.menuFileNew.Click += new System.EventHandler(this.MenuFileNew_Click);
             // 
@@ -211,29 +219,29 @@
             // 
             this.menuFileOpen.Name = "menuFileOpen";
             this.menuFileOpen.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.O)));
-            this.menuFileOpen.Size = new System.Drawing.Size(180, 22);
+            this.menuFileOpen.Size = new System.Drawing.Size(167, 22);
             this.menuFileOpen.Text = "開啟舊檔";
             // 
             // toolStripSeparator1
             // 
             this.toolStripSeparator1.Name = "toolStripSeparator1";
-            this.toolStripSeparator1.Size = new System.Drawing.Size(177, 6);
+            this.toolStripSeparator1.Size = new System.Drawing.Size(164, 6);
             // 
             // menuRecentFiles
             // 
             this.menuRecentFiles.Name = "menuRecentFiles";
-            this.menuRecentFiles.Size = new System.Drawing.Size(180, 22);
+            this.menuRecentFiles.Size = new System.Drawing.Size(167, 22);
             this.menuRecentFiles.Text = "最近的檔案";
             // 
             // toolStripSeparator2
             // 
             this.toolStripSeparator2.Name = "toolStripSeparator2";
-            this.toolStripSeparator2.Size = new System.Drawing.Size(177, 6);
+            this.toolStripSeparator2.Size = new System.Drawing.Size(164, 6);
             // 
             // menuFileExit
             // 
             this.menuFileExit.Name = "menuFileExit";
-            this.menuFileExit.Size = new System.Drawing.Size(180, 22);
+            this.menuFileExit.Size = new System.Drawing.Size(167, 22);
             this.menuFileExit.Text = "結束";
             this.menuFileExit.Click += new System.EventHandler(this.MenuFileExit_Click);
             // 
@@ -248,7 +256,7 @@
             // menuSettingsTemplate
             // 
             this.menuSettingsTemplate.Name = "menuSettingsTemplate";
-            this.menuSettingsTemplate.Size = new System.Drawing.Size(180, 22);
+            this.menuSettingsTemplate.Size = new System.Drawing.Size(122, 22);
             this.menuSettingsTemplate.Text = "範本設定";
             this.menuSettingsTemplate.Click += new System.EventHandler(this.MenuSettingsTemplate_Click);
             // 
@@ -263,7 +271,7 @@
             // menuHelpAbout
             // 
             this.menuHelpAbout.Name = "menuHelpAbout";
-            this.menuHelpAbout.Size = new System.Drawing.Size(180, 22);
+            this.menuHelpAbout.Size = new System.Drawing.Size(98, 22);
             this.menuHelpAbout.Text = "關於";
             this.menuHelpAbout.Click += new System.EventHandler(this.MenuHelpAbout_Click);
             // 
@@ -285,8 +293,8 @@
             // 
             // tabControl
             // 
-            this.tabControl.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-            | System.Windows.Forms.AnchorStyles.Left)
+            this.tabControl.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.tabControl.Controls.Add(this.tabPageBasicInfo);
             this.tabControl.Controls.Add(this.tabPagePhotos);
@@ -314,7 +322,7 @@
             // 
             // groupBox1
             // 
-            this.groupBox1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
+            this.groupBox1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.groupBox1.Controls.Add(this.lblDateTime);
             this.groupBox1.Controls.Add(this.dtpDateTime);
@@ -340,7 +348,7 @@
             // 
             // dtpDateTime
             // 
-            this.dtpDateTime.CustomFormat = DateUtility.GetRocDateTimePickerFormat();
+            this.dtpDateTime.CustomFormat = "\'民國\' yyy \'年\' MM \'月\' dd \'日\' HH:mm";
             this.dtpDateTime.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
             this.dtpDateTime.Location = new System.Drawing.Point(78, 30);
             this.dtpDateTime.Name = "dtpDateTime";
@@ -403,11 +411,20 @@
             // 
             // splitContainer.Panel2
             // 
+            this.splitContainer.Panel2.Controls.Add(this.lblPhotoInfo);
             this.splitContainer.Panel2.Controls.Add(this.pbPhotoPreview);
             this.splitContainer.Panel2.Controls.Add(this.lblPreview);
             this.splitContainer.Size = new System.Drawing.Size(496, 397);
             this.splitContainer.SplitterDistance = 245;
             this.splitContainer.TabIndex = 0;
+            // 
+            // lblPhotoInfo
+            // 
+            this.lblPhotoInfo.AutoSize = true;
+            this.lblPhotoInfo.Location = new System.Drawing.Point(3, 370);
+            this.lblPhotoInfo.Name = "lblPhotoInfo";
+            this.lblPhotoInfo.Size = new System.Drawing.Size(0, 12);
+            this.lblPhotoInfo.TabIndex = 2;
             // 
             // lvPhotos
             // 
@@ -448,7 +465,7 @@
             // 
             // txtPhotoDescription
             // 
-            this.txtPhotoDescription.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
+            this.txtPhotoDescription.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.txtPhotoDescription.Enabled = false;
             this.txtPhotoDescription.Location = new System.Drawing.Point(65, 15);
@@ -491,8 +508,8 @@
             // 
             // pbPhotoPreview
             // 
-            this.pbPhotoPreview.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-            | System.Windows.Forms.AnchorStyles.Left)
+            this.pbPhotoPreview.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.pbPhotoPreview.BackColor = System.Drawing.Color.White;
             this.pbPhotoPreview.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
@@ -538,6 +555,7 @@
             this.Name = "Form1";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "警察照片證據生成器";
+            this.tblUnitLayout.ResumeLayout(false);
             this.menuStrip.ResumeLayout(false);
             this.menuStrip.PerformLayout();
             this.statusStrip.ResumeLayout(false);
