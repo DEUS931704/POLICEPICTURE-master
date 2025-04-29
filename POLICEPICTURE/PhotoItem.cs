@@ -96,7 +96,8 @@ namespace POLICEPICTURE
         {
             if (CaptureTime.HasValue)
             {
-                return CaptureTime.Value.ToString("yyyy年MM月dd日 HH:mm");
+                // 使用民國年格式
+                return DateUtility.ToRocDateString(CaptureTime.Value, true);
             }
             return string.Empty;
         }

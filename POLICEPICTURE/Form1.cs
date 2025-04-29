@@ -43,13 +43,16 @@ namespace POLICEPICTURE
             // 設置列表視圖
             SetupListView();
 
+            // 設定 DateTimePicker 顯示民國年
+            DateUtility.SetupRocDateTimePicker(dtpDateTime);
+
             // 訂閱照片管理器的事件
             PhotoManager.Instance.PhotosChanged += PhotoManager_PhotosChanged;
 
             // 選擇第一個大單位
-            if (lstMainUnit.Items.Count > 0)
+            if (cmbMainUnit.Items.Count > 0)
             {
-                lstMainUnit.SelectedIndex = 0;
+                cmbMainUnit.SelectedIndex = 0;
             }
 
             // 從設定中填充表單
@@ -61,15 +64,15 @@ namespace POLICEPICTURE
                 // 設置大單位
                 if (unitParts.Length > 0)
                 {
-                    int index = lstMainUnit.Items.IndexOf(unitParts[0]);
+                    int index = cmbMainUnit.Items.IndexOf(unitParts[0]);
                     if (index >= 0)
                     {
-                        lstMainUnit.SelectedIndex = index;
+                        cmbMainUnit.SelectedIndex = index;
 
                         // 設置小單位
-                        if (unitParts.Length > 1 && lstSubUnit.Items.Contains(unitParts[1]))
+                        if (unitParts.Length > 1 && cmbSubUnit.Items.Contains(unitParts[1]))
                         {
-                            lstSubUnit.SelectedItem = unitParts[1];
+                            cmbSubUnit.SelectedItem = unitParts[1];
                         }
                     }
                 }
@@ -85,50 +88,49 @@ namespace POLICEPICTURE
             UpdateStatusBar("應用程式就緒");
         }
 
-        // 大單位選擇變更事件處理方法
-        private void lstMainUnit_SelectedIndexChanged(object sender, EventArgs e)
+        // 修改事件處理方法
+        private void cmbMainUnit_SelectedIndexChanged(object sender, EventArgs e)
         {
-            // 清空小單位列表
-            lstSubUnit.Items.Clear();
+            // 清空小單位下拉選單
+            cmbSubUnit.Items.Clear();
 
             // 獲取選中的大單位
-            string selectedMainUnit = lstMainUnit.SelectedItem as string;
+            string selectedMainUnit = cmbMainUnit.SelectedItem as string;
 
             // 如果選中了有效的大單位，則加載對應的小單位
             if (!string.IsNullOrEmpty(selectedMainUnit) && unitMapping.ContainsKey(selectedMainUnit))
             {
-                lstSubUnit.Items.AddRange(unitMapping[selectedMainUnit]);
+                cmbSubUnit.Items.AddRange(unitMapping[selectedMainUnit]);
 
                 // 預選第一個小單位
-                if (lstSubUnit.Items.Count > 0)
+                if (cmbSubUnit.Items.Count > 0)
                 {
-                    lstSubUnit.SelectedIndex = 0;
+                    cmbSubUnit.SelectedIndex = 0;
                 }
             }
 
             // 更新狀態
             UpdateUnitStatus();
         }
-
-        // 小單位選擇變更事件處理方法
-        private void lstSubUnit_SelectedIndexChanged(object sender, EventArgs e)
+        private void cmbSubUnit_SelectedIndexChanged(object sender, EventArgs e)
         {
             // 更新狀態
             UpdateUnitStatus();
         }
 
-        // 更新單位狀態
+        // 修改UpdateUnitStatus方法
         private void UpdateUnitStatus()
         {
             // 更新狀態欄顯示當前選擇的單位
-            string mainUnit = lstMainUnit.SelectedItem as string ?? "";
-            string subUnit = lstSubUnit.SelectedItem as string ?? "";
+            string mainUnit = cmbMainUnit.SelectedItem as string ?? "";
+            string subUnit = cmbSubUnit.SelectedItem as string ?? "";
 
             if (!string.IsNullOrEmpty(mainUnit) && !string.IsNullOrEmpty(subUnit))
             {
                 UpdateStatusBar($"當前選擇單位: {mainUnit} {subUnit}");
             }
         }
+
 
         // 新增以下更新最近檔案選單的方法
         private void UpdateRecentFilesMenu()
@@ -591,26 +593,9 @@ namespace POLICEPICTURE
         /// </summary>
         private void MenuFileNew_Click(object sender, EventArgs e)
         {
-            // 詢問用戶是否要儲存當前工作
-            if (IsFormDirty())
-            {
-                DialogResult result = MessageBox.Show("您有未儲存的工作，是否儲存？", "確認",
-                    MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
 
-                if (result == DialogResult.Cancel)
-                    return;
 
-                if (result == DialogResult.Yes)
-                {
-                    // 如果用戶取消了儲存，則也取消新建
-                    if (!SaveDocument())
-                        return;
-                }
-            }
 
-            // 清除所有欄位和照片
-            if (lstMainUnit.Items.Count > 0)
-                lstMainUnit.SelectedIndex = 0; // 重置為第一個選項
             txtCase.Text = string.Empty;
             dtpDateTime.Value = DateTime.Now;
             txtLocation.Text = string.Empty;
@@ -676,21 +661,7 @@ namespace POLICEPICTURE
             Logger.Log("用戶嘗試使用未完成的預覽功能");
         }
 
-        /// <summary>
-        /// 檢查表單是否有未保存的內容
-        /// </summary>
-        private bool IsFormDirty()
-        {
-            // 如果有選擇了單位、輸入案由內容或照片，則認為有未儲存的工作
-            string mainUnit = lstMainUnit.SelectedItem as string ?? "";
-            string subUnit = lstSubUnit.SelectedItem as string ?? "";
 
-            return !string.IsNullOrEmpty(mainUnit) &&
-                   !string.IsNullOrEmpty(subUnit) ||
-                   !string.IsNullOrWhiteSpace(txtCase.Text) ||
-                   !string.IsNullOrWhiteSpace(txtLocation.Text) ||
-                   PhotoManager.Instance.Count > 0;
-        }
 
         /// <summary>
         /// 驗證表單數據
@@ -703,18 +674,18 @@ namespace POLICEPICTURE
             string errorMessage = "";
 
             // 檢查是否選擇了大單位和小單位
-            if (lstMainUnit.SelectedIndex < 0)
+            if (cmbMainUnit.SelectedIndex < 0)
             {
                 isValid = false;
-                errorMessage += "• 請選擇大單位\n";
-                if (showErrors) errorProvider.SetError(lstMainUnit, "請選擇大單位");
+                errorMessage += "• 請選擇機關\n";
+                if (showErrors) errorProvider.SetError(cmbMainUnit, "請選擇機關");
             }
 
-            if (lstSubUnit.SelectedIndex < 0)
+            if (cmbSubUnit.SelectedIndex < 0)
             {
                 isValid = false;
-                errorMessage += "• 請選擇小單位\n";
-                if (showErrors) errorProvider.SetError(lstSubUnit, "請選擇小單位");
+                errorMessage += "• 請選擇單位\n";
+                if (showErrors) errorProvider.SetError(cmbSubUnit, "請選擇單位");
             }
 
             if (string.IsNullOrWhiteSpace(txtCase.Text))
@@ -753,16 +724,16 @@ namespace POLICEPICTURE
             try
             {
                 // 收集表單數據
-                string mainUnit = lstMainUnit.SelectedItem as string ?? "";
-                string subUnit = lstSubUnit.SelectedItem as string ?? "";
-                string unit = $"{mainUnit} {subUnit}".Trim();
+                string mainUnit = cmbMainUnit.SelectedItem as string ?? "";
+                string subUnit = cmbSubUnit.SelectedItem as string ?? "";
+                string unit = $"新竹市警察局 {mainUnit} {subUnit}".Trim();
                 string caseDescription = txtCase.Text.Trim();
                 string time = dtpDateTime.Text.Trim();
                 string address = txtLocation.Text.Trim();
                 string name = txtPhotographer.Text.Trim();
 
                 // 儲存設定
-                settings.LastUnit = unit;
+                settings.LastUnit = $"{mainUnit} {subUnit}";
                 settings.LastPhotographer = name;
                 settings.Save();
 

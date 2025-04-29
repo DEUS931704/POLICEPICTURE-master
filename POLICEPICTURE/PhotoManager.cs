@@ -340,8 +340,10 @@ namespace POLICEPICTURE
                     // 替換模板中的特殊標記
                     string newDescription = descriptionTemplate
                         .Replace("{INDEX}", (i + 1).ToString())
-                        .Replace("{DATE}", _photos[i].CaptureTime?.ToString("yyyy/MM/dd") ?? "")
-                        .Replace("{TIME}", _photos[i].CaptureTime?.ToString("HH:mm:ss") ?? "")
+                        .Replace("{DATE}", _photos[i].CaptureTime.HasValue ?
+                            DateUtility.ToRocDateString(_photos[i].CaptureTime.Value, false) : "")
+                        .Replace("{TIME}", _photos[i].CaptureTime.HasValue ?
+                            _photos[i].CaptureTime.Value.ToString("HH:mm:ss") : "")
                         .Replace("{FILENAME}", Path.GetFileName(_photos[i].FilePath));
 
                     // 更新描述

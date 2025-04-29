@@ -30,10 +30,17 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.lstMainUnit = new System.Windows.Forms.ListBox();
-            this.lstSubUnit = new System.Windows.Forms.ListBox();
-            this.lblMainUnit = new System.Windows.Forms.Label();
-            this.lblSubUnit = new System.Windows.Forms.Label();
+            this.tblUnitLayout = new System.Windows.Forms.TableLayoutPanel();
+            this.tblUnitLayout.Dock = System.Windows.Forms.DockStyle.None;
+            this.tblUnitLayout.Location = new System.Drawing.Point(29, 45);
+            this.tblUnitLayout.Name = "tblUnitLayout";
+            this.tblUnitLayout.Size = new System.Drawing.Size(350, 30);
+            this.tblUnitLayout.ColumnCount = 4;
+            this.tblUnitLayout.RowCount = 1;
+            this.tblUnitLayout.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.AutoSize));
+            this.tblUnitLayout.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.tblUnitLayout.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.AutoSize));
+            this.tblUnitLayout.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
             this.lblCase = new System.Windows.Forms.Label();
             this.txtCase = new System.Windows.Forms.TextBox();
             this.btnGenerate = new System.Windows.Forms.Button();
@@ -99,45 +106,46 @@
             // 大單位標籤
             this.lblMainUnit = new System.Windows.Forms.Label();
             this.lblMainUnit.AutoSize = true;
-            this.lblMainUnit.Location = new System.Drawing.Point(29, 45);
             this.lblMainUnit.Name = "lblMainUnit";
             this.lblMainUnit.Size = new System.Drawing.Size(53, 12);
-            this.lblMainUnit.TabIndex = 1;
-            this.lblMainUnit.Text = "大單位";
+            this.lblMainUnit.Text = "機關";
+            this.lblMainUnit.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            this.tblUnitLayout.Controls.Add(this.lblMainUnit, 0, 0);
 
-            // 大單位選擇框
-            this.lstMainUnit = new System.Windows.Forms.ListBox();
-            this.lstMainUnit.FormattingEnabled = true;
-            this.lstMainUnit.ItemHeight = 12;
-            this.lstMainUnit.Items.AddRange(new object[] {
-                "刑事警察大隊",
-                "第一分局",
-                "第二分局",
-                "第三分局"});
-            this.lstMainUnit.Location = new System.Drawing.Point(96, 40);
-            this.lstMainUnit.Name = "lstMainUnit";
-            this.lstMainUnit.Size = new System.Drawing.Size(135, 60);
-            this.lstMainUnit.TabIndex = 0;
-            this.lstMainUnit.SelectedIndexChanged += new System.EventHandler(this.lstMainUnit_SelectedIndexChanged);
+            // 大單位下拉選單
+            this.cmbMainUnit = new System.Windows.Forms.ComboBox();
+            this.cmbMainUnit.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbMainUnit.FormattingEnabled = true;
+            this.cmbMainUnit.Items.AddRange(new object[] {
+    "刑事警察大隊",
+    "第一分局",
+    "第二分局",
+    "第三分局"});
+            this.cmbMainUnit.Name = "cmbMainUnit";
+            this.cmbMainUnit.Size = new System.Drawing.Size(135, 20);
+            this.cmbMainUnit.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            this.cmbMainUnit.SelectedIndexChanged += new System.EventHandler(this.cmbMainUnit_SelectedIndexChanged);
+            this.tblUnitLayout.Controls.Add(this.cmbMainUnit, 1, 0);
 
             // 小單位標籤
             this.lblSubUnit = new System.Windows.Forms.Label();
             this.lblSubUnit.AutoSize = true;
-            this.lblSubUnit.Location = new System.Drawing.Point(29, 115);
+            this.lblSubUnit.Margin = new System.Windows.Forms.Padding(10, 0, 3, 0);
             this.lblSubUnit.Name = "lblSubUnit";
             this.lblSubUnit.Size = new System.Drawing.Size(53, 12);
-            this.lblSubUnit.TabIndex = 3;
-            this.lblSubUnit.Text = "小單位";
+            this.lblSubUnit.Text = "單位";
+            this.lblSubUnit.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            this.tblUnitLayout.Controls.Add(this.lblSubUnit, 2, 0);
 
-            // 小單位選擇框
-            this.lstSubUnit = new System.Windows.Forms.ListBox();
-            this.lstSubUnit.FormattingEnabled = true;
-            this.lstSubUnit.ItemHeight = 12;
-            this.lstSubUnit.Location = new System.Drawing.Point(96, 110);
-            this.lstSubUnit.Name = "lstSubUnit";
-            this.lstSubUnit.Size = new System.Drawing.Size(135, 60);
-            this.lstSubUnit.TabIndex = 2;
-            this.lstSubUnit.SelectedIndexChanged += new System.EventHandler(this.lstSubUnit_SelectedIndexChanged);
+            // 小單位下拉選單
+            this.cmbSubUnit = new System.Windows.Forms.ComboBox();
+            this.cmbSubUnit.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbSubUnit.FormattingEnabled = true;
+            this.cmbSubUnit.Name = "cmbSubUnit";
+            this.cmbSubUnit.Size = new System.Drawing.Size(135, 20);
+            this.cmbSubUnit.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            this.cmbSubUnit.SelectedIndexChanged += new System.EventHandler(this.cmbSubUnit_SelectedIndexChanged);
+            this.tblUnitLayout.Controls.Add(this.cmbSubUnit, 3, 0);
             // 
             // lblCase
             // 
@@ -290,11 +298,10 @@
             // 
             // tabPageBasicInfo
             // 
+            this.tabPageBasicInfo.Controls.Add(this.tblUnitLayout);
             this.tabPageBasicInfo.Controls.Add(this.groupBox1);
             this.tabPageBasicInfo.Controls.Add(this.lblMainUnit);
-            this.tabPageBasicInfo.Controls.Add(this.lstMainUnit);
             this.tabPageBasicInfo.Controls.Add(this.lblSubUnit);
-            this.tabPageBasicInfo.Controls.Add(this.lstSubUnit);
             this.tabPageBasicInfo.Controls.Add(this.lblCase);
             this.tabPageBasicInfo.Controls.Add(this.txtCase);
             this.tabPageBasicInfo.Location = new System.Drawing.Point(4, 22);
@@ -333,7 +340,7 @@
             // 
             // dtpDateTime
             // 
-            this.dtpDateTime.CustomFormat = "yyyy年MM月dd日 HH:mm";
+            this.dtpDateTime.CustomFormat = DateUtility.GetRocDateTimePickerFormat();
             this.dtpDateTime.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
             this.dtpDateTime.Location = new System.Drawing.Point(78, 30);
             this.dtpDateTime.Name = "dtpDateTime";
@@ -557,10 +564,11 @@
         #endregion
 
         // 修改：移除原有的 txtUnit，改為 ListBox 控制項
-        private System.Windows.Forms.ListBox lstMainUnit;
-        private System.Windows.Forms.ListBox lstSubUnit;
+        private System.Windows.Forms.ComboBox cmbMainUnit;
+        private System.Windows.Forms.ComboBox cmbSubUnit;
         private System.Windows.Forms.Label lblMainUnit;
         private System.Windows.Forms.Label lblSubUnit;
+        private System.Windows.Forms.TableLayoutPanel tblUnitLayout;
 
         private System.Windows.Forms.Label lblCase;
         private System.Windows.Forms.TextBox txtCase;

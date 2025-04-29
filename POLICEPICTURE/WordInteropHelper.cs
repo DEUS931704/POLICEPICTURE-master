@@ -117,13 +117,13 @@ namespace POLICEPICTURE
                 {
                     try
                     {
-                        // 嘗試解析時間字符串
-                        if (DateTime.TryParse(time, out DateTime dateTime))
-                        {
-                            // 只顯示年月日
-                            formattedTime = dateTime.ToString("yyyy年MM月dd日");
-                        }
-                        else
+                            // 嘗試解析時間字符串
+                            if (DateUtility.TryParseDateTime(time, out DateTime dateTime))
+                            {
+                                // 使用民國年格式
+                                formattedTime = DateUtility.ToRocDateString(dateTime);
+                            }
+                            else
                         {
                             // 如果無法解析，則使用原始字符串
                             formattedTime = time;
@@ -711,7 +711,11 @@ namespace POLICEPICTURE
                         range.Find.ClearFormatting();
                         range.Find.Replacement.ClearFormatting();
                         range.Find.Text = replacement.Key;
-                        range.Find.Replacement.Text = replacement.Value;
+
+                        // 特殊處理單位名稱
+                        string replacementText = replacement.Value;
+
+                        range.Find.Replacement.Text = replacementText;
                         range.Find.Execute(Replace: WdReplace.wdReplaceAll);
                     }
                 }
@@ -722,12 +726,15 @@ namespace POLICEPICTURE
                     // 使用替代方法逐段替換
                     foreach (var replacement in replacements)
                     {
+                        // 特殊處理單位名稱 - 替代方法中也需處理
+                        string replacementText = replacement.Value;
+
                         // 替換段落中的文本
                         foreach (Paragraph para in doc.Paragraphs)
                         {
                             if (para.Range.Text.Contains(replacement.Key))
                             {
-                                para.Range.Text = para.Range.Text.Replace(replacement.Key, replacement.Value);
+                                para.Range.Text = para.Range.Text.Replace(replacement.Key, replacementText);
                             }
                         }
 
@@ -740,7 +747,7 @@ namespace POLICEPICTURE
                                 {
                                     if (cell.Range.Text.Contains(replacement.Key))
                                     {
-                                        cell.Range.Text = cell.Range.Text.Replace(replacement.Key, replacement.Value);
+                                        cell.Range.Text = cell.Range.Text.Replace(replacement.Key, replacementText);
                                     }
                                 }
                             }
