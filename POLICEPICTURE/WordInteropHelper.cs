@@ -56,67 +56,67 @@ namespace POLICEPICTURE
             // 使用 Task.Run 在後台線程執行耗時操作
             return await System.Threading.Tasks.Task.Run(() =>
             {
-            // Word 應用實例、文檔和範圍變數
-            Microsoft.Office.Interop.Word.Application wordApp = null;
-            Microsoft.Office.Interop.Word.Document doc = null;
-            object missing = System.Reflection.Missing.Value;
+                // Word 應用實例、文檔和範圍變數
+                Microsoft.Office.Interop.Word.Application wordApp = null;
+                Microsoft.Office.Interop.Word.Document doc = null;
+                object missing = System.Reflection.Missing.Value;
 
-            try
-            {
-                // 報告進度 - 10%
-                progressReport?.Invoke(10, "準備生成文檔...");
-
-                // 檢查照片數量，提前顯示警告
-                if (photos.Count > 100)
+                try
                 {
-                    Logger.Log($"警告：處理大量照片({photos.Count}張)可能需要較長時間", Logger.LogLevel.Warning);
-                    progressReport?.Invoke(10, $"準備處理 {photos.Count} 張照片，這可能需要較長時間...");
-                }
+                    // 報告進度 - 10%
+                    progressReport?.Invoke(10, "準備生成文檔...");
 
-                // 驗證模板路徑
-                if (string.IsNullOrWhiteSpace(templatePath) || !File.Exists(templatePath))
-                {
-                    throw new FileNotFoundException("找不到範本檔案", templatePath);
-                }
-
-                // 確保輸出目錄存在
-                string outputDir = Path.GetDirectoryName(outputPath);
-                if (!Directory.Exists(outputDir))
-                {
-                    Directory.CreateDirectory(outputDir);
-                }
-
-                // 報告進度 - 20%
-                progressReport?.Invoke(20, "初始化 Word 應用...");
-
-                // 創建 Word 應用實例
-                wordApp = new Microsoft.Office.Interop.Word.Application();
-                wordApp.Visible = false; // 隱藏 Word 應用
-
-                // 報告進度 - 25%
-                progressReport?.Invoke(25, "加載範本文檔...");
-
-                // 優化：設置打開文檔選項以提高性能
-                object readOnly = false;
-                object isVisible = false;
-                object openAndRepair = false;
-
-                // 打開模板文件，使用優化參數
-                doc = wordApp.Documents.Open(
-                    templatePath,
-                    ReadOnly: readOnly,
-                    Visible: isVisible,
-                    OpenAndRepair: openAndRepair);
-
-                // 報告進度 - 30%
-                progressReport?.Invoke(30, "填充文檔內容...");
-
-                // 格式化時間，只保留年月日
-                string formattedTime = string.Empty;
-                if (!string.IsNullOrEmpty(time))
-                {
-                    try
+                    // 檢查照片數量，提前顯示警告
+                    if (photos.Count > 100)
                     {
+                        Logger.Log($"警告：處理大量照片({photos.Count}張)可能需要較長時間", Logger.LogLevel.Warning);
+                        progressReport?.Invoke(10, $"準備處理 {photos.Count} 張照片，這可能需要較長時間...");
+                    }
+
+                    // 驗證模板路徑
+                    if (string.IsNullOrWhiteSpace(templatePath) || !File.Exists(templatePath))
+                    {
+                        throw new FileNotFoundException("找不到範本檔案", templatePath);
+                    }
+
+                    // 確保輸出目錄存在
+                    string outputDir = Path.GetDirectoryName(outputPath);
+                    if (!Directory.Exists(outputDir))
+                    {
+                        Directory.CreateDirectory(outputDir);
+                    }
+
+                    // 報告進度 - 20%
+                    progressReport?.Invoke(20, "初始化 Word 應用...");
+
+                    // 創建 Word 應用實例
+                    wordApp = new Microsoft.Office.Interop.Word.Application();
+                    wordApp.Visible = false; // 隱藏 Word 應用
+
+                    // 報告進度 - 25%
+                    progressReport?.Invoke(25, "加載範本文檔...");
+
+                    // 優化：設置打開文檔選項以提高性能
+                    object readOnly = false;
+                    object isVisible = false;
+                    object openAndRepair = false;
+
+                    // 打開模板文件，使用優化參數
+                    doc = wordApp.Documents.Open(
+                        templatePath,
+                        ReadOnly: readOnly,
+                        Visible: isVisible,
+                        OpenAndRepair: openAndRepair);
+
+                    // 報告進度 - 30%
+                    progressReport?.Invoke(30, "填充文檔內容...");
+
+                    // 格式化時間，只保留年月日
+                    string formattedTime = string.Empty;
+                    if (!string.IsNullOrEmpty(time))
+                    {
+                        try
+                        {
                             // 嘗試解析時間字符串
                             if (DateUtility.TryParseDateTime(time, out DateTime dateTime))
                             {
@@ -124,19 +124,19 @@ namespace POLICEPICTURE
                                 formattedTime = DateUtility.ToRocDateString(dateTime);
                             }
                             else
+                            {
+                                // 如果無法解析，則使用原始字符串
+                                formattedTime = time;
+                            }
+                        }
+                        catch
                         {
-                            // 如果無法解析，則使用原始字符串
                             formattedTime = time;
                         }
                     }
-                    catch
-                    {
-                        formattedTime = time;
-                    }
-                }
 
-                // 批量替換文檔中的佔位符，提高性能
-                Dictionary<string, string> replacements = new Dictionary<string, string>
+                    // 批量替換文檔中的佔位符，提高性能
+                    Dictionary<string, string> replacements = new Dictionary<string, string>
                     {
                         { "%%UNIT%%", unit ?? string.Empty },
                         { "%%CASE%%", caseDesc ?? string.Empty },
@@ -150,41 +150,41 @@ namespace POLICEPICTURE
                         { "%%NUMBER%%", string.Empty }
                     };
 
-                // 批量替換所有佔位符
-                BatchReplaceTextInDocument(doc, replacements);
+                    // 批量替換所有佔位符
+                    BatchReplaceTextInDocument(doc, replacements);
 
-                // 報告進度 - 40%
-                progressReport?.Invoke(40, "查找照片標記和表格...");
+                    // 報告進度 - 40%
+                    progressReport?.Invoke(40, "查找照片標記和表格...");
 
-                // 使用新方法查找包含 %%PICTURE%% 標記的表格
-                TableInfo templateTableInfo = FindTableWithPictureMarkers(doc);
+                    // 使用新方法查找包含 %%PICTURE%% 標記的表格
+                    TableInfo templateTableInfo = FindTableWithPictureMarkers(doc);
 
-                if (templateTableInfo != null && templateTableInfo.Table != null && templateTableInfo.PictureMarkers.Count > 0)
-                {
-                    Logger.Log($"找到包含 %%PICTURE%% 標記的表格，標記數量: {templateTableInfo.PictureMarkers.Count}", Logger.LogLevel.Info);
-
-                    // 如果有照片並且找到了標記表格，處理照片
-                    if (photos.Count > 0)
+                    if (templateTableInfo != null && templateTableInfo.Table != null && templateTableInfo.PictureMarkers.Count > 0)
                     {
-                        // 報告進度 - 50%
-                        progressReport?.Invoke(50, "處理照片...");
+                        Logger.Log($"找到包含 %%PICTURE%% 標記的表格，標記數量: {templateTableInfo.PictureMarkers.Count}", Logger.LogLevel.Info);
 
-                        // 使用找到的表格和標記處理照片 - 優化版本
-                        ProcessPhotosInTemplateTableOptimized(doc, templateTableInfo, photos, progressReport);
+                        // 如果有照片並且找到了標記表格，處理照片
+                        if (photos.Count > 0)
+                        {
+                            // 報告進度 - 50%
+                            progressReport?.Invoke(50, "處理照片...");
+
+                            // 使用找到的表格和標記處理照片 - 優化版本
+                            ProcessPhotosInTemplateTableOptimized(doc, templateTableInfo, photos, progressReport);
+                        }
                     }
-                }
-                else
-                {
-                    Logger.Log("未找到包含 %%PICTURE%% 標記的表格，使用替代方法", Logger.LogLevel.Warning);
-
-                    // 如果沒有找到表格但有照片需要處理，使用替代方法
-                    if (photos.Count > 0)
+                    else
                     {
-                        // 報告進度 - 45%
-                        progressReport?.Invoke(45, "使用替代方法處理照片...");
-                        ProcessPhotosAlternativeOptimized(doc, photos, progressReport);
+                        Logger.Log("未找到包含 %%PICTURE%% 標記的表格，使用替代方法", Logger.LogLevel.Warning);
+
+                        // 如果沒有找到表格但有照片需要處理，使用替代方法
+                        if (photos.Count > 0)
+                        {
+                            // 報告進度 - 45%
+                            progressReport?.Invoke(45, "使用替代方法處理照片...");
+                            ProcessPhotosAlternativeOptimized(doc, photos, progressReport);
+                        }
                     }
-                }
 
                     // 最後，刪除文檔中任何剩餘的 %%PICTURE%% 標記
                     ReplaceTextInDocument(doc, "%%PICTURE%%", string.Empty);
@@ -711,11 +711,7 @@ namespace POLICEPICTURE
                         range.Find.ClearFormatting();
                         range.Find.Replacement.ClearFormatting();
                         range.Find.Text = replacement.Key;
-
-                        // 特殊處理單位名稱
-                        string replacementText = replacement.Value;
-
-                        range.Find.Replacement.Text = replacementText;
+                        range.Find.Replacement.Text = replacement.Value;
                         range.Find.Execute(Replace: WdReplace.wdReplaceAll);
                     }
                 }
@@ -726,15 +722,12 @@ namespace POLICEPICTURE
                     // 使用替代方法逐段替換
                     foreach (var replacement in replacements)
                     {
-                        // 特殊處理單位名稱 - 替代方法中也需處理
-                        string replacementText = replacement.Value;
-
                         // 替換段落中的文本
                         foreach (Paragraph para in doc.Paragraphs)
                         {
                             if (para.Range.Text.Contains(replacement.Key))
                             {
-                                para.Range.Text = para.Range.Text.Replace(replacement.Key, replacementText);
+                                para.Range.Text = para.Range.Text.Replace(replacement.Key, replacement.Value);
                             }
                         }
 
@@ -747,7 +740,7 @@ namespace POLICEPICTURE
                                 {
                                     if (cell.Range.Text.Contains(replacement.Key))
                                     {
-                                        cell.Range.Text = cell.Range.Text.Replace(replacement.Key, replacementText);
+                                        cell.Range.Text = cell.Range.Text.Replace(replacement.Key, replacement.Value);
                                     }
                                 }
                             }
