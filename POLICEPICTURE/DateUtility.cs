@@ -14,7 +14,7 @@ namespace POLICEPICTURE
         private const int ROC_YEAR_OFFSET = 1911;
 
         /// <summary>
-        /// 將西元日期時間轉換為民國年日期時間字串
+        /// 將西元日期時間轉換為民國年日期時間字串（不顯示"民國"二字）
         /// </summary>
         /// <param name="dateTime">西元日期時間</param>
         /// <param name="includeTime">是否包含時間部分</param>
@@ -23,11 +23,11 @@ namespace POLICEPICTURE
         {
             try
             {
-                // 計算民國年 (西元年 - 1911)
+                // 計算民國年 (西元年 - 1911)，但不加"民國"二字
                 int rocYear = dateTime.Year - ROC_YEAR_OFFSET;
 
-                // 格式化基本日期
-                string dateString = $"民國 {rocYear} 年 {dateTime.Month} 月 {dateTime.Day} 日";
+                // 格式化基本日期，不包含"民國"二字
+                string dateString = $"{rocYear} 年 {dateTime.Month} 月 {dateTime.Day} 日";
 
                 // 如果需要包含時間
                 if (includeTime)
@@ -40,21 +40,25 @@ namespace POLICEPICTURE
             catch (Exception ex)
             {
                 Logger.Log($"轉換民國年日期時出錯: {ex.Message}", Logger.LogLevel.Error);
-                return dateTime.ToString("yyyy年MM月dd日");
+
+                // 發生錯誤時使用西元年顯示
+                int rocYear = dateTime.Year - ROC_YEAR_OFFSET;
+                return $"{rocYear}年{dateTime.Month}月{dateTime.Day}日";
             }
         }
 
         /// <summary>
-        /// 使用DateTimePicker的CustomFormat格式將西元年轉為民國年格式
+        /// 使用DateTimePicker的CustomFormat格式將西元年轉為民國年格式（不顯示"民國"二字）
         /// </summary>
         /// <returns>適用於DateTimePicker的CustomFormat字符串</returns>
         public static string GetRocDateTimePickerFormat()
         {
-            return "'民國' yyy '年' MM '月' dd '日' HH:mm";
+            // 返回不含"民國"二字的格式
+            return "yyy '年' MM '月' dd '日' HH:mm";
         }
 
         /// <summary>
-        /// 將DateTimePicker控件設置為顯示民國年
+        /// 將DateTimePicker控件設置為顯示民國年（不顯示"民國"二字）
         /// </summary>
         /// <param name="picker">DateTimePicker控件</param>
         public static void SetupRocDateTimePicker(System.Windows.Forms.DateTimePicker picker)
@@ -63,14 +67,13 @@ namespace POLICEPICTURE
 
             try
             {
-                // 設置自定義格式，不使用Culture屬性
-                // 直接透過CustomFormat來模擬民國年的顯示
-                int currentYear = DateTime.Now.Year;
-                int rocYear = currentYear - ROC_YEAR_OFFSET;
-
-                // 設置自定義格式
+                // 設置自定義格式，使用台灣日曆文化
                 picker.CustomFormat = GetRocDateTimePickerFormat();
                 picker.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
+
+                // 使用台灣文化設定，以獲得民國年計算
+                CultureInfo culture = new CultureInfo("zh-TW");
+                culture.DateTimeFormat.Calendar = new TaiwanCalendar();
             }
             catch (Exception ex)
             {
@@ -89,7 +92,8 @@ namespace POLICEPICTURE
         /// <returns>是否為民國年格式</returns>
         public static bool IsRocDateFormat(string dateString)
         {
-            return !string.IsNullOrEmpty(dateString) && dateString.StartsWith("民國");
+            // 檢查是否有年月日格式，無需檢查"民國"二字
+            return !string.IsNullOrEmpty(dateString) && dateString.Contains("年") && dateString.Contains("月") && dateString.Contains("日");
         }
 
         /// <summary>
@@ -105,12 +109,12 @@ namespace POLICEPICTURE
             if (string.IsNullOrWhiteSpace(dateString))
                 return false;
 
-            // 嘗試解析民國年格式
+            // 嘗試解析民國年格式（不需要有"民國"二字的前綴）
             if (IsRocDateFormat(dateString))
             {
                 try
                 {
-                    // 提取民國年、月、日
+                    // 提取年、月、日
                     string cleanStr = dateString.Replace("民國", "").Replace("年", " ").Replace("月", " ").Replace("日", " ");
                     string[] parts = cleanStr.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
 
@@ -120,8 +124,16 @@ namespace POLICEPICTURE
                             int.TryParse(parts[1], out int month) &&
                             int.TryParse(parts[2], out int day))
                         {
-                            // 轉換為西元年
-                            int year = rocYear + ROC_YEAR_OFFSET;
+                            // 判斷是西元年還是民國年
+                            int year;
+                            if (rocYear > 1911) // 假設是西元年
+                            {
+                                year = rocYear;
+                            }
+                            else // 假設是民國年
+                            {
+                                year = rocYear + ROC_YEAR_OFFSET;
+                            }
 
                             // 創建DateTime
                             result = new DateTime(year, month, day);

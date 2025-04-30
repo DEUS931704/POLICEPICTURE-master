@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.IO;
 using POLICEPICTURE.Properties;
+using System.Globalization;
 
 namespace POLICEPICTURE
 {
@@ -26,7 +27,7 @@ namespace POLICEPICTURE
         // 定義單位數據結構，用於存儲單位對應關係
         private Dictionary<string, string[]> unitMapping = new Dictionary<string, string[]>()
         {
-            { "刑事警察大隊", new string[] { "偵一隊", "偵二隊", "偵三隊" } },
+            { "刑事警察大隊", new string[] { "偵一隊", "偵二隊", "偵三隊", "科偵隊" } },
             { "第一分局", new string[] { "偵查隊", "西門所", "北門所", "樹林頭所", "南寮所", "湳雅所" } },
             { "第二分局", new string[] { "偵查隊", "東門所", "東勢所", "埔頂所", "關東橋所", "文華所" } },
             { "第三分局", new string[] { "偵查隊", "香山所", "南門所", "朝山所", "青草湖所", "中華所" } }
@@ -43,8 +44,14 @@ namespace POLICEPICTURE
             // 設置列表視圖
             SetupListView();
 
-            // 設定 DateTimePicker 顯示民國年
-            DateUtility.SetupRocDateTimePicker(dtpDateTime);
+            // 設定 DateTimePicker 使用民國年但不顯示"民國"字樣
+            // 設置台灣文化
+            CultureInfo taiwanCulture = new CultureInfo("zh-TW");
+            taiwanCulture.DateTimeFormat.Calendar = new TaiwanCalendar();
+
+            // 設置日期選擇器的屬性
+            dtpDateTime.CustomFormat = "yyy '年' MM '月' dd '日' HH:mm";
+            dtpDateTime.Format = DateTimePickerFormat.Custom;
 
             // 訂閱照片管理器的事件
             PhotoManager.Instance.PhotosChanged += PhotoManager_PhotosChanged;
@@ -234,28 +241,32 @@ namespace POLICEPICTURE
             ToolStripMenuItem sortMenu = new ToolStripMenuItem("排序方式");
 
             ToolStripMenuItem sortByDateAsc = new ToolStripMenuItem("按日期升序");
-            sortByDateAsc.Click += (s, e) => {
+            sortByDateAsc.Click += (s, e) =>
+            {
                 PhotoManager.Instance.SortPhotosByDate(true);
                 UpdatePhotoListView();
             };
             sortMenu.DropDownItems.Add(sortByDateAsc);
 
             ToolStripMenuItem sortByDateDesc = new ToolStripMenuItem("按日期降序");
-            sortByDateDesc.Click += (s, e) => {
+            sortByDateDesc.Click += (s, e) =>
+            {
                 PhotoManager.Instance.SortPhotosByDate(false);
                 UpdatePhotoListView();
             };
             sortMenu.DropDownItems.Add(sortByDateDesc);
 
             ToolStripMenuItem sortByNameAsc = new ToolStripMenuItem("按文件名升序");
-            sortByNameAsc.Click += (s, e) => {
+            sortByNameAsc.Click += (s, e) =>
+            {
                 PhotoManager.Instance.SortPhotosByFileName(true);
                 UpdatePhotoListView();
             };
             sortMenu.DropDownItems.Add(sortByNameAsc);
 
             ToolStripMenuItem sortByNameDesc = new ToolStripMenuItem("按文件名降序");
-            sortByNameDesc.Click += (s, e) => {
+            sortByNameDesc.Click += (s, e) =>
+            {
                 PhotoManager.Instance.SortPhotosByFileName(false);
                 UpdatePhotoListView();
             };
@@ -279,7 +290,8 @@ namespace POLICEPICTURE
             menu.Items.Add(exportItem);
 
             // 開啟菜單前檢查項目啟用狀態
-            menu.Opening += (s, e) => {
+            menu.Opening += (s, e) =>
+            {
                 bool hasPhotos = PhotoManager.Instance.Count > 0;
                 bool hasSelection = lvPhotos.SelectedIndices.Count > 0;
 
@@ -302,13 +314,18 @@ namespace POLICEPICTURE
             if (e.ItemIndex < photos.Count)
             {
                 var photo = photos[e.ItemIndex];
-                var item = new ListViewItem((e.ItemIndex + 1).ToString()); // 編號列
+                var item = new ListViewItem((e.ItemIndex + 1).ToString()); // 序號列
 
                 // 添加子項
-                item.SubItems.Add(Path.GetFileName(photo.FilePath));
-                item.SubItems.Add(photo.CaptureTime?.ToString("yyyy/MM/dd HH:mm:ss") ?? "未知");
-                item.SubItems.Add($"{photo.Width}x{photo.Height}");
-                item.SubItems.Add(photo.Description);
+                item.SubItems.Add(Path.GetFileName(photo.FilePath)); // 檔案名稱
+                if (photo.CaptureTime.HasValue)
+                {
+                    item.SubItems.Add(photo.CaptureTime.Value.ToString("yyyy/MM/dd HH:mm:ss")); // 實際日期
+                }
+                else
+                {
+                    item.SubItems.Add("未知");
+                }
 
                 e.Item = item;
             }
@@ -593,9 +610,6 @@ namespace POLICEPICTURE
         /// </summary>
         private void MenuFileNew_Click(object sender, EventArgs e)
         {
-
-
-
             txtCase.Text = string.Empty;
             dtpDateTime.Value = DateTime.Now;
             txtLocation.Text = string.Empty;
@@ -644,24 +658,6 @@ namespace POLICEPICTURE
             MessageBox.Show($"警察照片證據生成器 v{APP_VERSION}\n\n用於生成包含照片的證據文件。",
                 "關於", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
-
-        /// <summary>
-        /// 預覽按鈕點擊事件
-        /// </summary>
-        private void btnPreview_Click(object sender, EventArgs e)
-        {
-            // 檢查表單數據
-            if (!ValidateFormData())
-            {
-                MessageBox.Show("請先填寫必要的資訊再預覽文件", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            MessageBox.Show("預覽功能正在開發中...", "功能未完成", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            Logger.Log("用戶嘗試使用未完成的預覽功能");
-        }
-
-
 
         /// <summary>
         /// 驗證表單數據

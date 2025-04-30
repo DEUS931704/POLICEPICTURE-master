@@ -8,6 +8,7 @@ using Microsoft.Office.Interop.Word;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using POLICEPICTURE;
+using System.Net;
 
 namespace POLICEPICTURE
 {
@@ -111,7 +112,7 @@ namespace POLICEPICTURE
                     // 報告進度 - 30%
                     progressReport?.Invoke(30, "填充文檔內容...");
 
-                    // 格式化時間，只保留年月日
+                    // 格式化時間，只保留年月日，使用西元年格式
                     string formattedTime = string.Empty;
                     if (!string.IsNullOrEmpty(time))
                     {
@@ -120,8 +121,9 @@ namespace POLICEPICTURE
                             // 嘗試解析時間字符串
                             if (DateUtility.TryParseDateTime(time, out DateTime dateTime))
                             {
-                                // 使用民國年格式
-                                formattedTime = DateUtility.ToRocDateString(dateTime);
+                                // 使用民國年顯示，但不顯示"民國"二字
+                                int rocYear = dateTime.Year - 1911;
+                                formattedTime = $"{rocYear} 年 {dateTime.Month} 月 {dateTime.Day} 日";
                             }
                             else
                             {
@@ -134,11 +136,13 @@ namespace POLICEPICTURE
                             formattedTime = time;
                         }
                     }
+                    
 
                     // 批量替換文檔中的佔位符，提高性能
-                    Dictionary<string, string> replacements = new Dictionary<string, string>
+                   Dictionary<string, string> replacements = new Dictionary<string, string>
                     {
-                        { "%%UNIT%%", unit ?? string.Empty },
+                        // 處理單位顯示，確保刑事警察大隊科偵隊等可以正確顯示
+                        { "%%UNIT%%", unit?.Replace(" ", "\n") ?? string.Empty }, // 主單位和子單位間使用換行符
                         { "%%CASE%%", caseDesc ?? string.Empty },
                         { "%%TIME%%", formattedTime },
                         { "%%ADDRESS%%", location ?? string.Empty },
@@ -461,7 +465,7 @@ namespace POLICEPICTURE
         }
 
         /// <summary>
-        /// 在單元格中處理照片
+        /// 在單元格中處理照片，針對垂直照片進行特殊處理
         /// </summary>
         private static void ProcessPhotoInCell(Document doc, Cell cell, Range markerRange, PhotoItem photo)
         {
@@ -511,28 +515,66 @@ namespace POLICEPICTURE
                 maxWidth = Math.Max(maxWidth, 150);
                 maxHeight = Math.Max(maxHeight, 120);
 
-                // 計算等比例縮放後的尺寸
+                // 計算等比例縮放後的尺寸，並判斷是否為垂直照片
+                bool isVertical = false;
+                float originalWidth = 0;
+                float originalHeight = 0;
+
+                // 先獲取照片原始尺寸
                 using (System.Drawing.Image img = System.Drawing.Image.FromFile(photo.FilePath))
                 {
-                    float ratio = Math.Min(maxWidth / img.Width, maxHeight / img.Height);
-                    ratio = Math.Min(ratio, 1.0f); // 不放大圖片
-                    float width = img.Width * ratio;
-                    float height = img.Height * ratio;
+                    originalWidth = img.Width;
+                    originalHeight = img.Height;
+                    isVertical = img.Height > img.Width;
 
-                    // 插入圖片
-                    markerRange.Text = ""; // 清除標記
-                    InlineShape shape = markerRange.InlineShapes.AddPicture(
-                        FileName: photo.FilePath,
-                        LinkToFile: false,
-                        SaveWithDocument: true);
-
-                    // 設置圖片尺寸
-                    shape.Width = (float)width;
-                    shape.Height = (float)height;
-
-                    // 居中圖片
-                    shape.Range.ParagraphFormat.Alignment = WdParagraphAlignment.wdAlignParagraphCenter;
+                    Logger.Log($"照片 {Path.GetFileName(photo.FilePath)} 尺寸: {img.Width}x{img.Height}, " +
+                              (isVertical ? "垂直照片" : "水平照片"), Logger.LogLevel.Debug);
                 }
+
+                // 對於垂直照片，使用不同的處理策略 - 預先縮放
+                float ratio;
+                float finalWidth, finalHeight;
+
+                if (isVertical)
+                {
+                    Logger.Log($"處理垂直照片: {Path.GetFileName(photo.FilePath)}", Logger.LogLevel.Info);
+
+                    // 對於垂直照片，使用垂直空間而非水平空間
+                    // 將照片保持垂直並縮放到合適高度
+                    ratio = Math.Min(maxHeight / originalHeight, maxWidth / originalWidth);
+
+                    // 不放大圖片
+                    ratio = Math.Min(ratio, 1.0f);
+
+                    // 計算最終尺寸
+                    finalWidth = originalWidth * ratio;
+                    finalHeight = originalHeight * ratio;
+                }
+                else
+                {
+                    // 水平照片正常處理
+                    ratio = Math.Min(maxWidth / originalWidth, maxHeight / originalHeight);
+
+                    // 不放大圖片
+                    ratio = Math.Min(ratio, 1.0f);
+
+                    finalWidth = originalWidth * ratio;
+                    finalHeight = originalHeight * ratio;
+                }
+
+                // 插入圖片
+                markerRange.Text = ""; // 清除標記
+                InlineShape shape = markerRange.InlineShapes.AddPicture(
+                    FileName: photo.FilePath,
+                    LinkToFile: false,
+                    SaveWithDocument: true);
+
+                // 設置圖片尺寸
+                shape.Width = finalWidth;
+                shape.Height = finalHeight;
+
+                // 居中圖片
+                shape.Range.ParagraphFormat.Alignment = WdParagraphAlignment.wdAlignParagraphCenter;
             }
             catch (Exception ex)
             {
@@ -638,17 +680,38 @@ namespace POLICEPICTURE
                             LinkToFile: false,
                             SaveWithDocument: true);
 
-                        // 調整照片大小
-                        float maxWidth = 230; // 單元格寬度減去邊距
-                        float maxHeight = 180;
+                        // 獲取照片原始尺寸並計算適當的尺寸
+                        float finalWidth, finalHeight;
+                        bool isVertical = false;
 
                         using (System.Drawing.Image img = System.Drawing.Image.FromFile(photo.FilePath))
                         {
-                            float ratio = Math.Min(maxWidth / img.Width, maxHeight / img.Height);
-                            ratio = Math.Min(ratio, 1.0f); // 不放大圖片
-                            shape.Width = img.Width * ratio;
-                            shape.Height = img.Height * ratio;
+                            isVertical = img.Height > img.Width;
+
+                            // 調整照片大小
+                            float maxWidth = 230; // 單元格寬度減去邊距
+                            float maxHeight = 180;
+
+                            float ratio;
+                            // 根據照片方向選擇適當的縮放比例
+                            ratio = Math.Min(maxWidth / img.Width, maxHeight / img.Height);
+
+                            // 不放大圖片
+                            ratio = Math.Min(ratio, 1.0f);
+
+                            // 計算最終尺寸
+                            finalWidth = img.Width * ratio;
+                            finalHeight = img.Height * ratio;
+
+                            if (isVertical)
+                            {
+                                Logger.Log($"處理垂直照片: {Path.GetFileName(photo.FilePath)}", Logger.LogLevel.Info);
+                            }
                         }
+
+                        // 設置圖片尺寸
+                        shape.Width = finalWidth;
+                        shape.Height = finalHeight;
 
                         // 設置居中
                         shape.Range.ParagraphFormat.Alignment = WdParagraphAlignment.wdAlignParagraphCenter;
@@ -812,4 +875,4 @@ namespace POLICEPICTURE
             }
         }
     }
-    }
+}

@@ -67,6 +67,7 @@
             this.lvPhotos = new System.Windows.Forms.ListView();
             this.colFilename = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.colDate = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.colRealDate = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.panel1 = new System.Windows.Forms.Panel();
             this.txtPhotoDescription = new System.Windows.Forms.TextBox();
             this.lblPhotoDescription = new System.Windows.Forms.Label();
@@ -74,7 +75,6 @@
             this.btnAddPhoto = new System.Windows.Forms.Button();
             this.pbPhotoPreview = new System.Windows.Forms.PictureBox();
             this.lblPreview = new System.Windows.Forms.Label();
-            this.btnPreview = new System.Windows.Forms.Button();
             this.tblUnitLayout.SuspendLayout();
             this.menuStrip.SuspendLayout();
             this.statusStrip.SuspendLayout();
@@ -174,7 +174,7 @@
             // btnGenerate
             // 
             this.btnGenerate.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnGenerate.Location = new System.Drawing.Point(374, 470);
+            this.btnGenerate.Location = new System.Drawing.Point(192, 470);
             this.btnGenerate.Name = "btnGenerate";
             this.btnGenerate.Size = new System.Drawing.Size(120, 38);
             this.btnGenerate.TabIndex = 4;
@@ -293,8 +293,8 @@
             // 
             // tabControl
             // 
-            this.tabControl.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
+            this.tabControl.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+            | System.Windows.Forms.AnchorStyles.Left)
             | System.Windows.Forms.AnchorStyles.Right)));
             this.tabControl.Controls.Add(this.tabPageBasicInfo);
             this.tabControl.Controls.Add(this.tabPagePhotos);
@@ -322,7 +322,7 @@
             // 
             // groupBox1
             // 
-            this.groupBox1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            this.groupBox1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
             | System.Windows.Forms.AnchorStyles.Right)));
             this.groupBox1.Controls.Add(this.lblDateTime);
             this.groupBox1.Controls.Add(this.dtpDateTime);
@@ -348,7 +348,7 @@
             // 
             // dtpDateTime
             // 
-            this.dtpDateTime.CustomFormat = "\'民國\' yyy \'年\' MM \'月\' dd \'日\' HH:mm";
+            this.dtpDateTime.CustomFormat = "yyyy \'年\' MM \'月\' dd \'日\' HH:mm";
             this.dtpDateTime.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
             this.dtpDateTime.Location = new System.Drawing.Point(78, 30);
             this.dtpDateTime.Name = "dtpDateTime";
@@ -430,7 +430,8 @@
             // 
             this.lvPhotos.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.colFilename,
-            this.colDate});
+            this.colDate,
+            this.colRealDate});
             this.lvPhotos.Dock = System.Windows.Forms.DockStyle.Fill;
             this.lvPhotos.HideSelection = false;
             this.lvPhotos.Location = new System.Drawing.Point(0, 0);
@@ -443,13 +444,18 @@
             // 
             // colFilename
             // 
-            this.colFilename.Text = "檔案名稱";
-            this.colFilename.Width = 120;
+            this.colFilename.Text = "序號";
+            this.colFilename.Width = 50;
             // 
             // colDate
             // 
-            this.colDate.Text = "日期";
+            this.colDate.Text = "檔案名稱";
             this.colDate.Width = 120;
+            // 
+            // colRealDate
+            // 
+            this.colRealDate.Text = "日期";
+            this.colRealDate.Width = 100;
             // 
             // panel1
             // 
@@ -465,7 +471,7 @@
             // 
             // txtPhotoDescription
             // 
-            this.txtPhotoDescription.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            this.txtPhotoDescription.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
             | System.Windows.Forms.AnchorStyles.Right)));
             this.txtPhotoDescription.Enabled = false;
             this.txtPhotoDescription.Location = new System.Drawing.Point(65, 15);
@@ -508,8 +514,8 @@
             // 
             // pbPhotoPreview
             // 
-            this.pbPhotoPreview.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
+            this.pbPhotoPreview.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+            | System.Windows.Forms.AnchorStyles.Left)
             | System.Windows.Forms.AnchorStyles.Right)));
             this.pbPhotoPreview.BackColor = System.Drawing.Color.White;
             this.pbPhotoPreview.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
@@ -529,23 +535,11 @@
             this.lblPreview.TabIndex = 0;
             this.lblPreview.Text = "照片預覽：";
             // 
-            // btnPreview
-            // 
-            this.btnPreview.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.btnPreview.Location = new System.Drawing.Point(40, 470);
-            this.btnPreview.Name = "btnPreview";
-            this.btnPreview.Size = new System.Drawing.Size(120, 38);
-            this.btnPreview.TabIndex = 8;
-            this.btnPreview.Text = "預覽文件";
-            this.btnPreview.UseVisualStyleBackColor = true;
-            this.btnPreview.Click += new System.EventHandler(this.btnPreview_Click);
-            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(534, 539);
-            this.Controls.Add(this.btnPreview);
             this.Controls.Add(this.tabControl);
             this.Controls.Add(this.statusStrip);
             this.Controls.Add(this.menuStrip);
@@ -619,6 +613,7 @@
         private System.Windows.Forms.ListView lvPhotos;
         private System.Windows.Forms.ColumnHeader colFilename;
         private System.Windows.Forms.ColumnHeader colDate;
+        private System.Windows.Forms.ColumnHeader colRealDate;
         private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.TextBox txtPhotoDescription;
         private System.Windows.Forms.Label lblPhotoDescription;
@@ -626,6 +621,5 @@
         private System.Windows.Forms.Button btnAddPhoto;
         private System.Windows.Forms.PictureBox pbPhotoPreview;
         private System.Windows.Forms.Label lblPreview;
-        private System.Windows.Forms.Button btnPreview;
     }
 }
