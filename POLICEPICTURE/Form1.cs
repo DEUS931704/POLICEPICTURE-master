@@ -19,7 +19,7 @@ namespace POLICEPICTURE
         // 以下是照片管理相關的方法
 
         // 新增這些成員變數
-        private const string APP_VERSION = "1.0.0"; // 應用程式版本常數
+        private const string APP_VERSION = "1.0.5"; // 應用程式版本常數
         private readonly UserSettings settings; // 使用者設定
         private readonly ErrorProvider errorProvider; // 錯誤提供者
         private ProgressForm progressForm; // 進度表單
@@ -87,8 +87,6 @@ namespace POLICEPICTURE
 
             if (!string.IsNullOrEmpty(settings.LastPhotographer))
                 txtPhotographer.Text = settings.LastPhotographer;
-
-
 
             // 更新狀態列
             UpdateStatusBar("應用程式就緒");
@@ -554,7 +552,7 @@ namespace POLICEPICTURE
         /// </summary>
         private void MenuHelpAbout_Click(object sender, EventArgs e)
         {
-            MessageBox.Show($"警察照片證據生成器 v{APP_VERSION}\n\n用於生成包含照片的證據文件。",
+            MessageBox.Show($"警察照片證據生成器 v{APP_VERSION}\n\n用於生成包含照片的證據文件。\n\n新竹市警察局刑大科偵隊",
                 "關於", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
@@ -698,10 +696,8 @@ namespace POLICEPICTURE
 
                                 if (success)
                                 {
-                                    // 移除：添加到最近文件列表
-                                    // settings.AddRecentFile(saveFilePath);
+                                    // 保存設定
                                     settings.Save();
-                                    // 移除：UpdateRecentFilesMenu();
 
                                     UpdateStatusBar("文件已成功生成");
                                     MessageBox.Show($"文件已成功生成！\n儲存路徑: {saveFilePath}", "成功", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -1182,6 +1178,7 @@ namespace POLICEPICTURE
             // 記錄應用程式結束
             Logger.Log("應用程式結束");
         }
+
         private void TblUnitLayout_Paint(object sender, PaintEventArgs e)
         {
 

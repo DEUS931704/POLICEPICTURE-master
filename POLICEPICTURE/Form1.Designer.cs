@@ -39,15 +39,6 @@
             this.txtCase = new System.Windows.Forms.TextBox();
             this.btnGenerate = new System.Windows.Forms.Button();
             this.menuStrip = new System.Windows.Forms.MenuStrip();
-            this.menuFile = new System.Windows.Forms.ToolStripMenuItem();
-            this.menuFileNew = new System.Windows.Forms.ToolStripMenuItem();
-            this.menuFileOpen = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
-            this.menuRecentFiles = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
-            this.menuFileExit = new System.Windows.Forms.ToolStripMenuItem();
-            this.menuSettings = new System.Windows.Forms.ToolStripMenuItem();
-            this.menuSettingsTemplate = new System.Windows.Forms.ToolStripMenuItem();
             this.menuHelp = new System.Windows.Forms.ToolStripMenuItem();
             this.menuHelpAbout = new System.Windows.Forms.ToolStripMenuItem();
             this.statusStrip = new System.Windows.Forms.StatusStrip();
@@ -158,7 +149,7 @@
             // lblCase
             // 
             this.lblCase.AutoSize = true;
-            this.lblCase.Location = new System.Drawing.Point(29, 185);
+            this.lblCase.Location = new System.Drawing.Point(3, 98);
             this.lblCase.Name = "lblCase";
             this.lblCase.Size = new System.Drawing.Size(29, 12);
             this.lblCase.TabIndex = 2;
@@ -166,9 +157,9 @@
             // 
             // txtCase
             // 
-            this.txtCase.Location = new System.Drawing.Point(96, 180);
+            this.txtCase.Location = new System.Drawing.Point(32, 95);
             this.txtCase.Name = "txtCase";
-            this.txtCase.Size = new System.Drawing.Size(285, 22);
+            this.txtCase.Size = new System.Drawing.Size(344, 22);
             this.txtCase.TabIndex = 3;
             // 
             // btnGenerate
@@ -185,49 +176,12 @@
             // menuStrip
             // 
             this.menuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.menuFile,
-            this.menuSettings,
             this.menuHelp});
             this.menuStrip.Location = new System.Drawing.Point(0, 0);
             this.menuStrip.Name = "menuStrip";
             this.menuStrip.Size = new System.Drawing.Size(534, 24);
             this.menuStrip.TabIndex = 5;
             this.menuStrip.Text = "menuStrip1";
-            // 
-            // menuFile
-            // 
-            this.menuFile.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.menuFileNew,
-            this.menuFileOpen,
-            this.toolStripSeparator1,
-            this.menuRecentFiles,
-            this.toolStripSeparator2,
-            this.menuFileExit});
-            this.menuFile.Name = "menuFile";
-            this.menuFile.Size = new System.Drawing.Size(43, 20);
-            this.menuFile.Text = "檔案";
-
-            // 
-            // toolStripSeparator1
-            // 
-            this.toolStripSeparator1.Name = "toolStripSeparator1";
-            this.toolStripSeparator1.Size = new System.Drawing.Size(164, 6);
-
-            // 
-            // toolStripSeparator2
-            // 
-            this.toolStripSeparator2.Name = "toolStripSeparator2";
-            this.toolStripSeparator2.Size = new System.Drawing.Size(164, 6);
-
-            // 
-            // menuSettings
-            // 
-            this.menuSettings.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.menuSettingsTemplate});
-            this.menuSettings.Name = "menuSettings";
-            this.menuSettings.Size = new System.Drawing.Size(43, 20);
-            this.menuSettings.Text = "設定";
-
             // 
             // menuHelp
             // 
@@ -299,7 +253,7 @@
             this.groupBox1.Controls.Add(this.txtLocation);
             this.groupBox1.Controls.Add(this.lblPhotographer);
             this.groupBox1.Controls.Add(this.txtPhotographer);
-            this.groupBox1.Location = new System.Drawing.Point(18, 220);
+            this.groupBox1.Location = new System.Drawing.Point(6, 138);
             this.groupBox1.Name = "groupBox1";
             this.groupBox1.Size = new System.Drawing.Size(466, 169);
             this.groupBox1.TabIndex = 4;
@@ -490,7 +444,7 @@
             this.pbPhotoPreview.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.pbPhotoPreview.Location = new System.Drawing.Point(3, 25);
             this.pbPhotoPreview.Name = "pbPhotoPreview";
-            this.pbPhotoPreview.Size = new System.Drawing.Size(241, 372);
+            this.pbPhotoPreview.Size = new System.Drawing.Size(241, 342);
             this.pbPhotoPreview.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.pbPhotoPreview.TabIndex = 1;
             this.pbPhotoPreview.TabStop = false;
@@ -556,15 +510,6 @@
         private System.Windows.Forms.TextBox txtCase;
         private System.Windows.Forms.Button btnGenerate;
         private System.Windows.Forms.MenuStrip menuStrip;
-        private System.Windows.Forms.ToolStripMenuItem menuFile;
-        private System.Windows.Forms.ToolStripMenuItem menuFileNew;
-        private System.Windows.Forms.ToolStripMenuItem menuFileOpen;
-        private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
-        private System.Windows.Forms.ToolStripMenuItem menuRecentFiles;
-        private System.Windows.Forms.ToolStripSeparator toolStripSeparator2;
-        private System.Windows.Forms.ToolStripMenuItem menuFileExit;
-        private System.Windows.Forms.ToolStripMenuItem menuSettings;
-        private System.Windows.Forms.ToolStripMenuItem menuSettingsTemplate;
         private System.Windows.Forms.ToolStripMenuItem menuHelp;
         private System.Windows.Forms.ToolStripMenuItem menuHelpAbout;
         private System.Windows.Forms.StatusStrip statusStrip;
