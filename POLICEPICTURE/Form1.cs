@@ -20,12 +20,12 @@ namespace POLICEPICTURE
 
         // 新增這些成員變數
         private const string APP_VERSION = "1.0.0"; // 應用程式版本常數
-        private UserSettings settings; // 使用者設定
-        private ErrorProvider errorProvider; // 錯誤提供者
+        private readonly UserSettings settings; // 使用者設定
+        private readonly ErrorProvider errorProvider; // 錯誤提供者
         private ProgressForm progressForm; // 進度表單
 
         // 定義單位數據結構，用於存儲單位對應關係
-        private Dictionary<string, string[]> unitMapping = new Dictionary<string, string[]>()
+        private readonly Dictionary<string, string[]> unitMapping = new Dictionary<string, string[]>()
         {
             { "刑事警察大隊", new string[] { "偵一隊", "偵二隊", "偵三隊", "科偵隊" } },
             { "第一分局", new string[] { "偵查隊", "西門所", "北門所", "樹林頭所", "南寮所", "湳雅所" } },
@@ -96,7 +96,7 @@ namespace POLICEPICTURE
         }
 
         // 修改事件處理方法
-        private void cmbMainUnit_SelectedIndexChanged(object sender, EventArgs e)
+        private void CmbMainUnit_SelectedIndexChanged(object sender, EventArgs e)
         {
             // 清空小單位下拉選單
             cmbSubUnit.Items.Clear();
@@ -119,7 +119,7 @@ namespace POLICEPICTURE
             // 更新狀態
             UpdateUnitStatus();
         }
-        private void cmbSubUnit_SelectedIndexChanged(object sender, EventArgs e)
+        private void CmbSubUnit_SelectedIndexChanged(object sender, EventArgs e)
         {
             // 更新狀態
             UpdateUnitStatus();
@@ -226,12 +226,12 @@ namespace POLICEPICTURE
             // 添加照片
             ToolStripMenuItem addItem = new ToolStripMenuItem("添加照片");
             addItem.Image = SystemIcons.Application.ToBitmap(); // 或使用自定義圖標
-            addItem.Click += (s, e) => btnAddPhoto_Click(s, e);
+            addItem.Click += (s, e) => BtnAddPhoto_Click(s, e);
             menu.Items.Add(addItem);
 
             // 移除照片
             ToolStripMenuItem removeItem = new ToolStripMenuItem("移除選中照片");
-            removeItem.Click += (s, e) => btnRemovePhoto_Click(s, e);
+            removeItem.Click += (s, e) => BtnRemovePhoto_Click(s, e);
             menu.Items.Add(removeItem);
 
             // 分隔線
@@ -512,7 +512,7 @@ namespace POLICEPICTURE
         /// <summary>
         /// 照片列表選擇變更事件
         /// </summary>
-        private void lvPhotos_SelectedIndexChanged(object sender, EventArgs e)
+        private void LvPhotos_SelectedIndexChanged(object sender, EventArgs e)
         {
             // 當清單選擇改變時更新右側顯示和描述文字框
             if (lvPhotos.SelectedIndices.Count > 0)
@@ -592,7 +592,7 @@ namespace POLICEPICTURE
         /// <summary>
         /// 生成文件點擊事件
         /// </summary>
-        private void btnGenerate_Click(object sender, EventArgs e)
+        private void BtnGenerate_Click(object sender, EventArgs e)
         {
             // 驗證表單並顯示錯誤
             if (!ValidateFormData(true))
@@ -867,7 +867,7 @@ namespace POLICEPICTURE
         /// <summary>
         /// 添加照片按鈕點擊事件
         /// </summary>
-        private void btnAddPhoto_Click(object sender, EventArgs e)
+        private void BtnAddPhoto_Click(object sender, EventArgs e)
         {
             if (PhotoManager.Instance.Count >= PhotoManager.MAX_PHOTOS)
             {
@@ -923,7 +923,7 @@ namespace POLICEPICTURE
         /// <summary>
         /// 移除照片按鈕點擊事件
         /// </summary>
-        private void btnRemovePhoto_Click(object sender, EventArgs e)
+        private void BtnRemovePhoto_Click(object sender, EventArgs e)
         {
             if (lvPhotos.SelectedIndices.Count > 0)
             {
@@ -1163,10 +1163,7 @@ namespace POLICEPICTURE
                 form.ShowDialog();
 
                 // 釋放資源
-                if (preview.Image != null)
-                {
-                    preview.Image.Dispose();
-                }
+                preview.Image?.Dispose();
             }
         }
 
@@ -1236,7 +1233,12 @@ namespace POLICEPICTURE
             }
         }
 
-        private void tblUnitLayout_Paint(object sender, PaintEventArgs e)
+        private void TblUnitLayout_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
         {
 
         }

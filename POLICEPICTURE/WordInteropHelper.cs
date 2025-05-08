@@ -438,7 +438,7 @@ namespace POLICEPICTURE
                         try
                         {
                             // 處理照片
-                            ProcessPhotoInCell(doc, markerInfo.Cell, markerInfo.MarkerRange, photo);
+                            ProcessPhotoInCell(markerInfo.Cell, markerInfo.MarkerRange, photo);
 
                             // 僅對部分照片記錄詳細日誌
                             if (photoIndex % PROGRESS_REPORT_INTERVAL == 0 || photoIndex == photos.Count - 1)
@@ -467,7 +467,7 @@ namespace POLICEPICTURE
         /// <summary>
         /// 在單元格中處理照片，針對垂直照片進行特殊處理
         /// </summary>
-        private static void ProcessPhotoInCell(Document doc, Cell cell, Range markerRange, PhotoItem photo)
+        private static void ProcessPhotoInCell(Cell cell, Range markerRange, PhotoItem photo)
         {
             try
             {
@@ -539,10 +539,15 @@ namespace POLICEPICTURE
                 {
                     Logger.Log($"處理垂直照片: {Path.GetFileName(photo.FilePath)}", Logger.LogLevel.Info);
 
-                    // 對於垂直照片，使用垂直空間而非水平空間
-                    // 將照片保持垂直並縮放到合適高度
-                    ratio = Math.Min(maxHeight / originalHeight, maxWidth / originalWidth);
+                    // 對於非常細長的垂直照片，使用特別的縮放比例
+                    if (originalHeight > originalWidth * 2) // 如果高度超過寬度的2倍
+                    {
+                        // 增加允許的最大高度，但設定上限
+                        maxHeight = Math.Min(maxHeight * 1.5f, 450);
+                    }
 
+                    // 使用修改後的縮放比例
+                    ratio = Math.Min(maxWidth / originalWidth, maxHeight / originalHeight);
                     // 不放大圖片
                     ratio = Math.Min(ratio, 1.0f);
 
@@ -582,6 +587,59 @@ namespace POLICEPICTURE
                 markerRange.Text = $"[照片錯誤: {ex.Message}]";
                 markerRange.Bold = 1;
                 markerRange.Font.Color = WdColor.wdColorRed;
+            }
+        }
+
+        /// <summary>
+        /// 安全檢查表格中的單元格是否存在
+        /// </summary>
+        private static bool SafeCheckTableCell(Table table, int rowIndex, int colIndex)
+        {
+            try
+            {
+                if (table == null || rowIndex <= 0 || colIndex <= 0)
+                    return false;
+
+                // 檢查行是否存在
+                if (rowIndex > table.Rows.Count)
+                    return false;
+
+                // 獲取行
+                Row row = table.Rows[rowIndex];
+                if (row == null)
+                    return false;
+
+                // 檢查列是否存在
+                if (colIndex > row.Cells.Count)
+                    return false;
+
+                // 檢查單元格是否存在
+                Cell cell = row.Cells[colIndex];
+                return (cell != null);
+            }
+            catch
+            {
+                // 如果出現任何異常，表示單元格訪問有問題
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// 安全獲取表格單元格
+        /// </summary>
+        private static Cell SafeGetTableCell(Table table, int rowIndex, int colIndex)
+        {
+            try
+            {
+                if (!SafeCheckTableCell(table, rowIndex, colIndex))
+                    return null;
+
+                return table.Cell(rowIndex, colIndex);
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"安全獲取表格單元格時出錯: 行={rowIndex}, 列={colIndex}, 錯誤:{ex.Message}", Logger.LogLevel.Warning);
+                return null;
             }
         }
 

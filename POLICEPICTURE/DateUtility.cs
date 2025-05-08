@@ -67,19 +67,17 @@ namespace POLICEPICTURE
 
             try
             {
-                // 設置自定義格式，使用台灣日曆文化
-                picker.CustomFormat = GetRocDateTimePickerFormat();
-                picker.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
+                // 設置台灣文化和日曆
+                CultureInfo twCulture = new CultureInfo("zh-TW");
+                twCulture.DateTimeFormat.Calendar = new TaiwanCalendar();
 
-                // 使用台灣文化設定，以獲得民國年計算
-                CultureInfo culture = new CultureInfo("zh-TW");
-                culture.DateTimeFormat.Calendar = new TaiwanCalendar();
+                // 顯示民國年但不含"民國"二字
+                picker.CustomFormat = "yyy '年' MM '月' dd '日' HH:mm";
+                picker.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
             }
             catch (Exception ex)
             {
                 Logger.Log($"設置民國年DateTimePicker時出錯: {ex.Message}", Logger.LogLevel.Error);
-
-                // 發生錯誤時回退到標準格式
                 picker.CustomFormat = "yyyy年MM月dd日 HH:mm";
                 picker.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
             }

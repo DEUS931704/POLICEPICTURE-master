@@ -17,7 +17,7 @@ namespace POLICEPICTURE
         private static PhotoManager _instance;
 
         // 照片列表
-        private List<PhotoItem> _photos = new List<PhotoItem>();
+        private readonly List<PhotoItem> _photos = new List<PhotoItem>();
 
         // 最大照片數量限制 - 修改為支持1000張照片
         public const int MAX_PHOTOS = 1000;

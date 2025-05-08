@@ -31,10 +31,10 @@
         private void InitializeComponent()
         {
             this.tblUnitLayout = new System.Windows.Forms.TableLayoutPanel();
-            this.lblMainUnit = new System.Windows.Forms.Label();
             this.cmbMainUnit = new System.Windows.Forms.ComboBox();
-            this.lblSubUnit = new System.Windows.Forms.Label();
             this.cmbSubUnit = new System.Windows.Forms.ComboBox();
+            this.lblMainUnit = new System.Windows.Forms.Label();
+            this.lblSubUnit = new System.Windows.Forms.Label();
             this.lblCase = new System.Windows.Forms.Label();
             this.txtCase = new System.Windows.Forms.TextBox();
             this.btnGenerate = new System.Windows.Forms.Button();
@@ -63,7 +63,6 @@
             this.txtPhotographer = new System.Windows.Forms.TextBox();
             this.tabPagePhotos = new System.Windows.Forms.TabPage();
             this.splitContainer = new System.Windows.Forms.SplitContainer();
-            this.lblPhotoInfo = new System.Windows.Forms.Label();
             this.lvPhotos = new System.Windows.Forms.ListView();
             this.colFilename = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.colDate = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
@@ -73,6 +72,7 @@
             this.lblPhotoDescription = new System.Windows.Forms.Label();
             this.btnRemovePhoto = new System.Windows.Forms.Button();
             this.btnAddPhoto = new System.Windows.Forms.Button();
+            this.lblPhotoInfo = new System.Windows.Forms.Label();
             this.pbPhotoPreview = new System.Windows.Forms.PictureBox();
             this.lblPreview = new System.Windows.Forms.Label();
             this.tblUnitLayout.SuspendLayout();
@@ -102,20 +102,10 @@
             this.tblUnitLayout.Location = new System.Drawing.Point(29, 45);
             this.tblUnitLayout.Name = "tblUnitLayout";
             this.tblUnitLayout.RowCount = 1;
-            this.tblUnitLayout.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
+            this.tblUnitLayout.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 30F));
             this.tblUnitLayout.Size = new System.Drawing.Size(350, 30);
             this.tblUnitLayout.TabIndex = 0;
-            this.tblUnitLayout.Paint += new System.Windows.Forms.PaintEventHandler(this.tblUnitLayout_Paint);
-            // 
-            // lblMainUnit
-            // 
-            this.lblMainUnit.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
-            this.lblMainUnit.AutoSize = true;
-            this.lblMainUnit.Location = new System.Drawing.Point(3, 9);
-            this.lblMainUnit.Name = "lblMainUnit";
-            this.lblMainUnit.Size = new System.Drawing.Size(29, 12);
-            this.lblMainUnit.TabIndex = 0;
-            this.lblMainUnit.Text = "機關";
+            this.tblUnitLayout.Paint += new System.Windows.Forms.PaintEventHandler(this.TblUnitLayout_Paint);
             // 
             // cmbMainUnit
             // 
@@ -131,7 +121,28 @@
             this.cmbMainUnit.Name = "cmbMainUnit";
             this.cmbMainUnit.Size = new System.Drawing.Size(169, 20);
             this.cmbMainUnit.TabIndex = 1;
-            this.cmbMainUnit.SelectedIndexChanged += new System.EventHandler(this.cmbMainUnit_SelectedIndexChanged);
+            this.cmbMainUnit.SelectedIndexChanged += new System.EventHandler(this.CmbMainUnit_SelectedIndexChanged);
+            // 
+            // cmbSubUnit
+            // 
+            this.cmbSubUnit.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
+            this.cmbSubUnit.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbSubUnit.FormattingEnabled = true;
+            this.cmbSubUnit.Location = new System.Drawing.Point(178, 5);
+            this.cmbSubUnit.Name = "cmbSubUnit";
+            this.cmbSubUnit.Size = new System.Drawing.Size(169, 20);
+            this.cmbSubUnit.TabIndex = 3;
+            this.cmbSubUnit.SelectedIndexChanged += new System.EventHandler(this.CmbSubUnit_SelectedIndexChanged);
+            // 
+            // lblMainUnit
+            // 
+            this.lblMainUnit.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
+            this.lblMainUnit.AutoSize = true;
+            this.lblMainUnit.Location = new System.Drawing.Point(3, 9);
+            this.lblMainUnit.Name = "lblMainUnit";
+            this.lblMainUnit.Size = new System.Drawing.Size(29, 12);
+            this.lblMainUnit.TabIndex = 0;
+            this.lblMainUnit.Text = "機關";
             // 
             // lblSubUnit
             // 
@@ -143,17 +154,6 @@
             this.lblSubUnit.Size = new System.Drawing.Size(29, 12);
             this.lblSubUnit.TabIndex = 2;
             this.lblSubUnit.Text = "單位";
-            // 
-            // cmbSubUnit
-            // 
-            this.cmbSubUnit.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
-            this.cmbSubUnit.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cmbSubUnit.FormattingEnabled = true;
-            this.cmbSubUnit.Location = new System.Drawing.Point(178, 5);
-            this.cmbSubUnit.Name = "cmbSubUnit";
-            this.cmbSubUnit.Size = new System.Drawing.Size(169, 20);
-            this.cmbSubUnit.TabIndex = 3;
-            this.cmbSubUnit.SelectedIndexChanged += new System.EventHandler(this.cmbSubUnit_SelectedIndexChanged);
             // 
             // lblCase
             // 
@@ -180,7 +180,7 @@
             this.btnGenerate.TabIndex = 4;
             this.btnGenerate.Text = "生成文件";
             this.btnGenerate.UseVisualStyleBackColor = true;
-            this.btnGenerate.Click += new System.EventHandler(this.btnGenerate_Click);
+            this.btnGenerate.Click += new System.EventHandler(this.BtnGenerate_Click);
             // 
             // menuStrip
             // 
@@ -293,8 +293,8 @@
             // 
             // tabControl
             // 
-            this.tabControl.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-            | System.Windows.Forms.AnchorStyles.Left)
+            this.tabControl.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.tabControl.Controls.Add(this.tabPageBasicInfo);
             this.tabControl.Controls.Add(this.tabPagePhotos);
@@ -322,7 +322,7 @@
             // 
             // groupBox1
             // 
-            this.groupBox1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
+            this.groupBox1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.groupBox1.Controls.Add(this.lblDateTime);
             this.groupBox1.Controls.Add(this.dtpDateTime);
@@ -418,14 +418,6 @@
             this.splitContainer.SplitterDistance = 245;
             this.splitContainer.TabIndex = 0;
             // 
-            // lblPhotoInfo
-            // 
-            this.lblPhotoInfo.AutoSize = true;
-            this.lblPhotoInfo.Location = new System.Drawing.Point(3, 370);
-            this.lblPhotoInfo.Name = "lblPhotoInfo";
-            this.lblPhotoInfo.Size = new System.Drawing.Size(0, 12);
-            this.lblPhotoInfo.TabIndex = 2;
-            // 
             // lvPhotos
             // 
             this.lvPhotos.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
@@ -440,7 +432,7 @@
             this.lvPhotos.TabIndex = 0;
             this.lvPhotos.UseCompatibleStateImageBehavior = false;
             this.lvPhotos.View = System.Windows.Forms.View.Details;
-            this.lvPhotos.SelectedIndexChanged += new System.EventHandler(this.lvPhotos_SelectedIndexChanged);
+            this.lvPhotos.SelectedIndexChanged += new System.EventHandler(this.LvPhotos_SelectedIndexChanged);
             // 
             // colFilename
             // 
@@ -471,7 +463,7 @@
             // 
             // txtPhotoDescription
             // 
-            this.txtPhotoDescription.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
+            this.txtPhotoDescription.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.txtPhotoDescription.Enabled = false;
             this.txtPhotoDescription.Location = new System.Drawing.Point(65, 15);
@@ -499,7 +491,7 @@
             this.btnRemovePhoto.TabIndex = 1;
             this.btnRemovePhoto.Text = "移除照片";
             this.btnRemovePhoto.UseVisualStyleBackColor = true;
-            this.btnRemovePhoto.Click += new System.EventHandler(this.btnRemovePhoto_Click);
+            this.btnRemovePhoto.Click += new System.EventHandler(this.BtnRemovePhoto_Click);
             // 
             // btnAddPhoto
             // 
@@ -510,12 +502,20 @@
             this.btnAddPhoto.TabIndex = 0;
             this.btnAddPhoto.Text = "添加照片";
             this.btnAddPhoto.UseVisualStyleBackColor = true;
-            this.btnAddPhoto.Click += new System.EventHandler(this.btnAddPhoto_Click);
+            this.btnAddPhoto.Click += new System.EventHandler(this.BtnAddPhoto_Click);
+            // 
+            // lblPhotoInfo
+            // 
+            this.lblPhotoInfo.AutoSize = true;
+            this.lblPhotoInfo.Location = new System.Drawing.Point(3, 370);
+            this.lblPhotoInfo.Name = "lblPhotoInfo";
+            this.lblPhotoInfo.Size = new System.Drawing.Size(0, 12);
+            this.lblPhotoInfo.TabIndex = 2;
             // 
             // pbPhotoPreview
             // 
-            this.pbPhotoPreview.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-            | System.Windows.Forms.AnchorStyles.Left)
+            this.pbPhotoPreview.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.pbPhotoPreview.BackColor = System.Drawing.Color.White;
             this.pbPhotoPreview.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
@@ -549,6 +549,7 @@
             this.Name = "Form1";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "警察照片證據生成器";
+            this.Load += new System.EventHandler(this.Form1_Load);
             this.tblUnitLayout.ResumeLayout(false);
             this.menuStrip.ResumeLayout(false);
             this.menuStrip.PerformLayout();
