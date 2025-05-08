@@ -465,7 +465,7 @@ namespace POLICEPICTURE
         }
 
         /// <summary>
-        /// 在單元格中處理照片，針對垂直照片進行特殊處理
+        /// 在單元格中處理照片，針對垂直照片進行旋轉處理
         /// </summary>
         private static void ProcessPhotoInCell(Cell cell, Range markerRange, PhotoItem photo)
         {
@@ -519,6 +519,7 @@ namespace POLICEPICTURE
                 bool isVertical = false;
                 float originalWidth = 0;
                 float originalHeight = 0;
+                string tempImagePath = null;
 
                 // 先獲取照片原始尺寸
                 using (System.Drawing.Image img = System.Drawing.Image.FromFile(photo.FilePath))
@@ -529,48 +530,85 @@ namespace POLICEPICTURE
 
                     Logger.Log($"照片 {Path.GetFileName(photo.FilePath)} 尺寸: {img.Width}x{img.Height}, " +
                               (isVertical ? "垂直照片" : "水平照片"), Logger.LogLevel.Debug);
+
+                    // 對於垂直照片，創建一個旋轉90度的臨時文件
+                    if (isVertical && img.Height > img.Width * 1.5) // 只有高度顯著大於寬度時才旋轉
+                    {
+                        try
+                        {
+                            // 創建臨時文件路徑
+                            tempImagePath = Path.Combine(
+                                Path.GetTempPath(),
+                                $"rotated_{Guid.NewGuid()}_{Path.GetFileName(photo.FilePath)}");
+
+                            // 旋轉照片並保存
+                            using (Bitmap rotated = new Bitmap(img.Height, img.Width))
+                            {
+                                using (Graphics g = Graphics.FromImage(rotated))
+                                {
+                                    // 設置高質量插值
+                                    g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                                    g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
+
+                                    // 旋轉圖像90度 (順時針)
+                                    g.TranslateTransform(rotated.Width / 2, rotated.Height / 2);
+                                    g.RotateTransform(-90); // 逆時針旋轉90度
+                                    g.TranslateTransform(-img.Width / 2, -img.Height / 2);
+
+                                    // 繪製旋轉後的圖像
+                                    g.DrawImage(img, new System.Drawing.Point(0, 0));
+                                }
+
+                                // 保存為臨時文件
+                                rotated.Save(tempImagePath, System.Drawing.Imaging.ImageFormat.Jpeg);
+
+                                // 在計算比例時交換寬高
+                                float temp = originalWidth;
+                                originalWidth = originalHeight;
+                                originalHeight = temp;
+
+                                Logger.Log($"已旋轉照片並保存到臨時文件: {tempImagePath}", Logger.LogLevel.Info);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Logger.Log($"旋轉照片時發生錯誤: {ex.Message}", Logger.LogLevel.Error);
+                            tempImagePath = null; // 重置臨時文件路徑
+                        }
+                    }
                 }
 
-                // 對於垂直照片，使用不同的處理策略 - 預先縮放
+                // 對於垂直照片，使用特別的縮放比例
                 float ratio;
                 float finalWidth, finalHeight;
 
                 if (isVertical)
                 {
-                    Logger.Log($"處理垂直照片: {Path.GetFileName(photo.FilePath)}", Logger.LogLevel.Info);
-
-                    // 對於非常細長的垂直照片，使用特別的縮放比例
-                    if (originalHeight > originalWidth * 2) // 如果高度超過寬度的2倍
+                    // 對於垂直照片，增加最大高度限制
+                    if (originalHeight > originalWidth * 1.5) // 如果高度顯著大於寬度
                     {
-                        // 增加允許的最大高度，但設定上限
-                        maxHeight = Math.Min(maxHeight * 1.5f, 450);
+                        // 為垂直照片增加高度，但設定上限
+                        maxHeight = Math.Min(maxHeight * 1.4f, 450);
                     }
-
-                    // 使用修改後的縮放比例
-                    ratio = Math.Min(maxWidth / originalWidth, maxHeight / originalHeight);
-                    // 不放大圖片
-                    ratio = Math.Min(ratio, 1.0f);
-
-                    // 計算最終尺寸
-                    finalWidth = originalWidth * ratio;
-                    finalHeight = originalHeight * ratio;
                 }
-                else
-                {
-                    // 水平照片正常處理
-                    ratio = Math.Min(maxWidth / originalWidth, maxHeight / originalHeight);
 
-                    // 不放大圖片
-                    ratio = Math.Min(ratio, 1.0f);
+                // 計算縮放比例
+                ratio = Math.Min(maxWidth / originalWidth, maxHeight / originalHeight);
+                // 不放大圖片
+                ratio = Math.Min(ratio, 1.0f);
 
-                    finalWidth = originalWidth * ratio;
-                    finalHeight = originalHeight * ratio;
-                }
+                // 計算最終尺寸
+                finalWidth = originalWidth * ratio;
+                finalHeight = originalHeight * ratio;
 
                 // 插入圖片
                 markerRange.Text = ""; // 清除標記
+
+                // 如果創建了旋轉的臨時文件，則使用臨時文件
+                string imagePathToUse = tempImagePath != null ? tempImagePath : photo.FilePath;
+
                 InlineShape shape = markerRange.InlineShapes.AddPicture(
-                    FileName: photo.FilePath,
+                    FileName: imagePathToUse,
                     LinkToFile: false,
                     SaveWithDocument: true);
 
@@ -580,6 +618,19 @@ namespace POLICEPICTURE
 
                 // 居中圖片
                 shape.Range.ParagraphFormat.Alignment = WdParagraphAlignment.wdAlignParagraphCenter;
+
+                // 如果使用了臨時文件，在插入完成後刪除
+                if (tempImagePath != null && File.Exists(tempImagePath))
+                {
+                    try
+                    {
+                        File.Delete(tempImagePath);
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Log($"刪除臨時照片文件時出錯: {ex.Message}", Logger.LogLevel.Warning);
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -600,27 +651,82 @@ namespace POLICEPICTURE
                 if (table == null || rowIndex <= 0 || colIndex <= 0)
                     return false;
 
-                // 檢查行是否存在
-                if (rowIndex > table.Rows.Count)
+                // 使用嘗試-捕捉方式獲取單元格而不是直接訪問
+                Cell cell = null;
+                try
+                {
+                    cell = table.Cell(rowIndex, colIndex);
+                    // 測試訪問單元格的屬性以確認其有效性
+                    var test = cell.Range;
+                    return true;
+                }
+                catch
+                {
                     return false;
-
-                // 獲取行
-                Row row = table.Rows[rowIndex];
-                if (row == null)
-                    return false;
-
-                // 檢查列是否存在
-                if (colIndex > row.Cells.Count)
-                    return false;
-
-                // 檢查單元格是否存在
-                Cell cell = row.Cells[colIndex];
-                return (cell != null);
+                }
             }
             catch
             {
                 // 如果出現任何異常，表示單元格訪問有問題
                 return false;
+            }
+        }
+
+        // 優化複製表格方法，使用更簡單的方法
+        private static Table CloneTableSimplified(Document doc, Table sourceTable)
+        {
+            try
+            {
+                // 獲取表格的行數和列數
+                int rowCount = sourceTable.Rows.Count;
+                int colCount = 0;
+
+                // 安全獲取列數
+                try
+                {
+                    colCount = sourceTable.Columns.Count;
+                }
+                catch
+                {
+                    // 如果無法獲取列數，嘗試從第一行計算
+                    if (rowCount > 0)
+                    {
+                        try
+                        {
+                            colCount = sourceTable.Rows[1].Cells.Count;
+                        }
+                        catch
+                        {
+                            colCount = 2; // 默認值
+                        }
+                    }
+                    else
+                    {
+                        colCount = 2; // 默認值
+                    }
+                }
+
+                // 創建新表格
+                Table newTable = doc.Tables.Add(doc.Range(doc.Content.End - 1, doc.Content.End - 1), rowCount, colCount);
+
+                // 複製整個表格的HTML或XML並替換到新表格
+                // 這可能需要使用更高級的方法，如將表格序列化為HTML然後重新插入
+
+                return newTable;
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"簡化複製表格時發生嚴重錯誤: {ex.Message}", Logger.LogLevel.Error);
+
+                // 創建一個基本表格作為備用
+                try
+                {
+                    return doc.Tables.Add(doc.Range(doc.Content.End - 1, doc.Content.End - 1), 3, 2);
+                }
+                catch
+                {
+                    return null;
+                }
             }
         }
 
