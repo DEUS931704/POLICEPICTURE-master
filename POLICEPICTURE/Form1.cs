@@ -88,8 +88,7 @@ namespace POLICEPICTURE
             if (!string.IsNullOrEmpty(settings.LastPhotographer))
                 txtPhotographer.Text = settings.LastPhotographer;
 
-            // 更新最近檔案選單
-            UpdateRecentFilesMenu();
+
 
             // 更新狀態列
             UpdateStatusBar("應用程式就緒");
@@ -136,61 +135,6 @@ namespace POLICEPICTURE
             {
                 UpdateStatusBar($"當前選擇單位: {mainUnit} {subUnit}");
             }
-        }
-
-
-        // 新增以下更新最近檔案選單的方法
-        private void UpdateRecentFilesMenu()
-        {
-            // 清空現有選單項
-            menuRecentFiles.DropDownItems.Clear();
-
-            // 如果沒有最近文件，顯示無項目訊息
-            if (settings.RecentFiles.Count == 0)
-            {
-                var noItemsMenuItem = new ToolStripMenuItem("無項目");
-                noItemsMenuItem.Enabled = false;
-                menuRecentFiles.DropDownItems.Add(noItemsMenuItem);
-                return;
-            }
-
-            // 添加每個最近文件
-            foreach (var filePath in settings.RecentFiles)
-            {
-                if (File.Exists(filePath))
-                {
-                    var menuItem = new ToolStripMenuItem(Path.GetFileName(filePath));
-                    menuItem.ToolTipText = filePath;
-                    menuItem.Tag = filePath;
-                    menuItem.Click += RecentFileMenuItem_Click;
-                    menuRecentFiles.DropDownItems.Add(menuItem);
-                }
-            }
-
-            // 添加分隔線和清除選單
-            menuRecentFiles.DropDownItems.Add(new ToolStripSeparator());
-            var clearMenuItem = new ToolStripMenuItem("清除列表");
-            clearMenuItem.Click += ClearRecentFiles_Click;
-            menuRecentFiles.DropDownItems.Add(clearMenuItem);
-        }
-
-        // 最近文件選單項點擊事件
-        private void RecentFileMenuItem_Click(object sender, EventArgs e)
-        {
-            var menuItem = sender as ToolStripMenuItem;
-            if (menuItem != null && menuItem.Tag is string filePath)
-            {
-                // 在這裡添加打開最近文件的代碼
-                MessageBox.Show($"開啟文件: {filePath}");
-            }
-        }
-
-        // 清除最近文件列表選單項點擊事件
-        private void ClearRecentFiles_Click(object sender, EventArgs e)
-        {
-            settings.ClearRecentFiles();
-            settings.Save();
-            UpdateRecentFilesMenu();
         }
 
         /// <summary>
@@ -606,51 +550,6 @@ namespace POLICEPICTURE
         }
 
         /// <summary>
-        /// 新建文件點擊事件
-        /// </summary>
-        private void MenuFileNew_Click(object sender, EventArgs e)
-        {
-            txtCase.Text = string.Empty;
-            dtpDateTime.Value = DateTime.Now;
-            txtLocation.Text = string.Empty;
-            txtPhotographer.Text = settings.LastPhotographer; // 保留攝影人
-
-            // 清除照片
-            PhotoManager.Instance.ClearPhotos();
-
-            UpdateStatusBar("已建立新文件");
-            Logger.Log("已建立新文件");
-        }
-
-        /// <summary>
-        /// 文件退出點擊事件
-        /// </summary>
-        private void MenuFileExit_Click(object sender, EventArgs e)
-        {
-            Application.Exit();
-        }
-
-        /// <summary>
-        /// 設定模板點擊事件
-        /// </summary>
-        private void MenuSettingsTemplate_Click(object sender, EventArgs e)
-        {
-            using (OpenFileDialog dlg = new OpenFileDialog())
-            {
-                dlg.Filter = "Word 文件 (*.docx)|*.docx";
-                dlg.Title = "選擇文件範本";
-
-                if (dlg.ShowDialog() == DialogResult.OK)
-                {
-                    settings.TemplatePath = dlg.FileName;
-                    settings.Save();
-                    MessageBox.Show($"已設定範本檔案為: {dlg.FileName}", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    Logger.Log($"設定範本檔案: {dlg.FileName}");
-                }
-            }
-        }
-
-        /// <summary>
         /// 關於點擊事件
         /// </summary>
         private void MenuHelpAbout_Click(object sender, EventArgs e)
@@ -756,21 +655,15 @@ namespace POLICEPICTURE
                         settings.LastSaveDirectory = Path.GetDirectoryName(saveFilePath);
                         settings.Save();
 
-                        // 查找有效的模板路徑
+                        // 查找有效的模板路徑（使用應用程序目錄）
                         string appPath = Application.StartupPath;
-                        string projectPath = Directory.GetParent(appPath)?.Parent?.FullName ?? appPath;
-
-                        string templatePath = DocHelper.FindValidTemplatePath(
-                            settings.TemplatePath,
-                            Path.Combine(appPath, "template.docx"),
-                            Path.Combine(projectPath, "template.docx")
-                        );
+                        string templatePath = Path.Combine(appPath, "template.docx");
 
                         // 檢查範本是否存在
-                        if (string.IsNullOrEmpty(templatePath))
+                        if (!File.Exists(templatePath))
                         {
                             Logger.Log("找不到範本檔案", Logger.LogLevel.Error);
-                            MessageBox.Show($"找不到範本檔案！\n\n已嘗試尋找：\n1. {settings.TemplatePath}\n2. {Path.Combine(appPath, "template.docx")}\n3. {Path.Combine(projectPath, "template.docx")}\n\n請確認template.docx的位置或使用設定選單來指定範本。",
+                            MessageBox.Show($"找不到範本檔案！\n\n請確認應用程式目錄下是否有template.docx檔案。",
                                 "錯誤", MessageBoxButtons.OK, MessageBoxIcon.Error);
                             return false;
                         }
@@ -782,7 +675,7 @@ namespace POLICEPICTURE
                         // 獲取照片列表
                         var photos = PhotoManager.Instance.GetAllPhotos();
 
-                        // 使用新的 WordInteropHelper 生成文檔（非同步）
+                        // 使用 WordInteropHelper 生成文檔（非同步）
                         Task.Run(async () =>
                         {
                             bool success = await WordInteropHelper.GenerateDocumentAsync(
@@ -805,10 +698,10 @@ namespace POLICEPICTURE
 
                                 if (success)
                                 {
-                                    // 添加到最近文件列表
-                                    settings.AddRecentFile(saveFilePath);
+                                    // 移除：添加到最近文件列表
+                                    // settings.AddRecentFile(saveFilePath);
                                     settings.Save();
-                                    UpdateRecentFilesMenu();
+                                    // 移除：UpdateRecentFilesMenu();
 
                                     UpdateStatusBar("文件已成功生成");
                                     MessageBox.Show($"文件已成功生成！\n儲存路徑: {saveFilePath}", "成功", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -1233,6 +1126,62 @@ namespace POLICEPICTURE
             }
         }
 
+        /// <summary>
+        /// 表單關閉時的處理
+        /// </summary>
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            base.OnFormClosing(e);
+
+            // 儲存使用者設定
+            if (settings != null)
+            {
+                settings.Save();
+            }
+
+            // 釋放資源
+            if (PhotoManager.Instance != null && PhotoManager.Instance.Count > 0)
+            {
+                // 詢問是否保存更改
+                if (MessageBox.Show("是否在退出前生成文件？", "確認",
+                    MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                {
+                    // 如果用戶選擇保存，則調用SaveDocument方法
+                    if (!SaveDocument())
+                    {
+                        // 如果保存失敗，詢問是否仍要退出
+                        if (MessageBox.Show("生成文件失敗，是否仍要退出？", "確認",
+                            MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No)
+                        {
+                            // 取消關閉操作
+                            e.Cancel = true;
+                            return;
+                        }
+                    }
+                }
+            }
+
+            // 清理資源
+            try
+            {
+                // 釋放圖片預覽資源
+                if (pbPhotoPreview.Image != null)
+                {
+                    pbPhotoPreview.Image.Dispose();
+                    pbPhotoPreview.Image = null;
+                }
+
+                // 其他資源釋放
+                // ...
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"釋放資源時發生錯誤: {ex.Message}", Logger.LogLevel.Error);
+            }
+
+            // 記錄應用程式結束
+            Logger.Log("應用程式結束");
+        }
         private void TblUnitLayout_Paint(object sender, PaintEventArgs e)
         {
 

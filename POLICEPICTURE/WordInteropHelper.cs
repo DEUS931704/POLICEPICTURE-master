@@ -9,6 +9,7 @@ using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using POLICEPICTURE;
 using System.Net;
+using System.Drawing.Imaging;
 
 namespace POLICEPICTURE
 {
@@ -526,54 +527,64 @@ namespace POLICEPICTURE
                 {
                     originalWidth = img.Width;
                     originalHeight = img.Height;
+                    // 判斷是否為垂直照片 - 高度大於寬度
                     isVertical = img.Height > img.Width;
 
                     Logger.Log($"照片 {Path.GetFileName(photo.FilePath)} 尺寸: {img.Width}x{img.Height}, " +
                               (isVertical ? "垂直照片" : "水平照片"), Logger.LogLevel.Debug);
 
-                    // 對於垂直照片，創建一個旋轉90度的臨時文件
-                    if (isVertical && img.Height > img.Width * 1.5) // 只有高度顯著大於寬度時才旋轉
+                    // 修改: 降低旋轉閾值，從1.5倍降低到1.2倍，讓更多垂直照片可以旋轉
+                    if (isVertical && img.Height > img.Width * 1.2) // 降低閾值，更多垂直照片會被旋轉
                     {
                         try
                         {
-                            // 創建臨時文件路徑
+                            // 確保臨時目錄存在
+                            string tempDir = Path.GetTempPath();
+                            Directory.CreateDirectory(tempDir);
+
+                            // 修改: 創建更簡單的唯一臨時文件名
                             tempImagePath = Path.Combine(
-                                Path.GetTempPath(),
-                                $"rotated_{Guid.NewGuid()}_{Path.GetFileName(photo.FilePath)}");
+                                tempDir,
+                                $"rotated_{Guid.NewGuid()}.jpg"); // 簡化文件名並強制使用jpg格式
 
-                            // 旋轉照片並保存
-                            using (Bitmap rotated = new Bitmap(img.Height, img.Width))
+                            // 修改: 使用更簡單可靠的旋轉方法
+                            using (Bitmap rotated = new Bitmap(img))
                             {
-                                using (Graphics g = Graphics.FromImage(rotated))
+                                // 使用RotateFlip方法直接旋轉90度，比手動變換座標更可靠
+                                rotated.RotateFlip(RotateFlipType.Rotate90FlipNone); // 順時針旋轉90度
+
+                                // 保存為臨時文件，使用高質量JPEG格式
+                                using (EncoderParameters encoderParams = new EncoderParameters(1))
                                 {
-                                    // 設置高質量插值
-                                    g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
-                                    g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
+                                    // 設定JPEG品質為90%以平衡品質和文件大小
+                                    encoderParams.Param[0] = new EncoderParameter(System.Drawing.Imaging.Encoder.Quality, 90L);
 
-                                    // 旋轉圖像90度 (順時針)
-                                    g.TranslateTransform(rotated.Width / 2, rotated.Height / 2);
-                                    g.RotateTransform(-90); // 逆時針旋轉90度
-                                    g.TranslateTransform(-img.Width / 2, -img.Height / 2);
+                                    // 獲取JPEG編碼器
+                                    ImageCodecInfo jpegEncoder = GetJpegEncoder();
 
-                                    // 繪製旋轉後的圖像
-                                    g.DrawImage(img, new System.Drawing.Point(0, 0));
+                                    // 保存為臨時文件
+                                    if (jpegEncoder != null)
+                                    {
+                                        rotated.Save(tempImagePath, jpegEncoder, encoderParams);
+                                    }
+                                    else
+                                    {
+                                        // 如果找不到JPEG編碼器，使用默認保存方式
+                                        rotated.Save(tempImagePath, System.Drawing.Imaging.ImageFormat.Jpeg);
+                                    }
                                 }
 
-                                // 保存為臨時文件
-                                rotated.Save(tempImagePath, System.Drawing.Imaging.ImageFormat.Jpeg);
-
-                                // 在計算比例時交換寬高
-                                float temp = originalWidth;
-                                originalWidth = originalHeight;
-                                originalHeight = temp;
+                                // 修改: 在旋轉後交換原始寬高，確保後續計算正確
+                                (originalWidth, originalHeight) = (originalHeight, originalWidth);
 
                                 Logger.Log($"已旋轉照片並保存到臨時文件: {tempImagePath}", Logger.LogLevel.Info);
                             }
                         }
                         catch (Exception ex)
                         {
-                            Logger.Log($"旋轉照片時發生錯誤: {ex.Message}", Logger.LogLevel.Error);
-                            tempImagePath = null; // 重置臨時文件路徑
+                            // 修改: 添加更詳細的錯誤日誌
+                            Logger.Log($"旋轉照片時發生詳細錯誤: {ex.Message}\n調用堆疊: {ex.StackTrace}", Logger.LogLevel.Error);
+                            tempImagePath = null; // 重置臨時文件路徑，確保後續使用原始文件
                         }
                     }
                 }
@@ -585,7 +596,8 @@ namespace POLICEPICTURE
                 if (isVertical)
                 {
                     // 對於垂直照片，增加最大高度限制
-                    if (originalHeight > originalWidth * 1.5) // 如果高度顯著大於寬度
+                    // 修改: 調整垂直照片的高度計算，從1.5倍降低到1.2倍
+                    if (originalHeight > originalWidth * 1.2) // 如果高度顯著大於寬度
                     {
                         // 為垂直照片增加高度，但設定上限
                         maxHeight = Math.Min(maxHeight * 1.4f, 450);
@@ -605,40 +617,92 @@ namespace POLICEPICTURE
                 markerRange.Text = ""; // 清除標記
 
                 // 如果創建了旋轉的臨時文件，則使用臨時文件
-                string imagePathToUse = tempImagePath != null ? tempImagePath : photo.FilePath;
+                string imagePathToUse = tempImagePath != null && File.Exists(tempImagePath) ?
+                                       tempImagePath : photo.FilePath;
 
-                InlineShape shape = markerRange.InlineShapes.AddPicture(
-                    FileName: imagePathToUse,
-                    LinkToFile: false,
-                    SaveWithDocument: true);
+                // 添加錯誤恢復機制，如果臨時文件有問題則使用原始文件
+                if (tempImagePath != null && !File.Exists(tempImagePath))
+                {
+                    Logger.Log($"臨時旋轉文件不存在，使用原始文件: {photo.FilePath}", Logger.LogLevel.Warning);
+                    imagePathToUse = photo.FilePath;
+                }
 
-                // 設置圖片尺寸
-                shape.Width = finalWidth;
-                shape.Height = finalHeight;
+                // 修改: 添加更多日誌記錄
+                Logger.Log($"插入圖片，使用文件: {imagePathToUse}, 尺寸: {finalWidth}x{finalHeight}", Logger.LogLevel.Debug);
 
-                // 居中圖片
-                shape.Range.ParagraphFormat.Alignment = WdParagraphAlignment.wdAlignParagraphCenter;
+                // 使用更安全的方式插入圖片
+                try
+                {
+                    InlineShape shape = markerRange.InlineShapes.AddPicture(
+                        FileName: imagePathToUse,
+                        LinkToFile: false,
+                        SaveWithDocument: true);
+
+                    // 設置圖片尺寸
+                    shape.Width = finalWidth;
+                    shape.Height = finalHeight;
+
+                    // 居中圖片
+                    shape.Range.ParagraphFormat.Alignment = WdParagraphAlignment.wdAlignParagraphCenter;
+                }
+                catch (Exception ex)
+                {
+                    Logger.Log($"插入圖片失敗，嘗試備用方法: {ex.Message}", Logger.LogLevel.Warning);
+
+                    // 備用方法: 使用標準範圍插入
+                    try
+                    {
+                        markerRange.InlineShapes.AddPicture(
+                            FileName: photo.FilePath, // 使用原始文件作為備用
+                            LinkToFile: false,
+                            SaveWithDocument: true);
+                    }
+                    catch (Exception backupEx)
+                    {
+                        Logger.Log($"備用插入方法也失敗: {backupEx.Message}", Logger.LogLevel.Error);
+                        markerRange.Text = $"[無法插入照片: {Path.GetFileName(photo.FilePath)}]";
+                    }
+                }
 
                 // 如果使用了臨時文件，在插入完成後刪除
                 if (tempImagePath != null && File.Exists(tempImagePath))
                 {
                     try
                     {
+                        // 增加延遲以確保文件不再被使用
+                        System.Threading.Thread.Sleep(100);
                         File.Delete(tempImagePath);
                     }
                     catch (Exception ex)
                     {
                         Logger.Log($"刪除臨時照片文件時出錯: {ex.Message}", Logger.LogLevel.Warning);
+                        // 不要因為無法刪除臨時文件而中斷處理
                     }
                 }
             }
             catch (Exception ex)
             {
-                Logger.Log($"在單元格中處理照片時出錯: {ex.Message}", Logger.LogLevel.Error);
+                Logger.Log($"在單元格中處理照片時出錯: {ex.Message}\n{ex.StackTrace}", Logger.LogLevel.Error);
                 markerRange.Text = $"[照片錯誤: {ex.Message}]";
                 markerRange.Bold = 1;
                 markerRange.Font.Color = WdColor.wdColorRed;
             }
+        }
+
+        /// <summary>
+        /// 獲取JPEG編碼器
+        /// </summary>
+        private static ImageCodecInfo GetJpegEncoder()
+        {
+            ImageCodecInfo[] codecs = ImageCodecInfo.GetImageEncoders();
+            foreach (ImageCodecInfo codec in codecs)
+            {
+                if (codec.MimeType == "image/jpeg")
+                {
+                    return codec;
+                }
+            }
+            return null;
         }
 
         /// <summary>

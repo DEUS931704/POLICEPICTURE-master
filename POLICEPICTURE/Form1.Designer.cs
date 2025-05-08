@@ -206,44 +206,19 @@
             this.menuFile.Name = "menuFile";
             this.menuFile.Size = new System.Drawing.Size(43, 20);
             this.menuFile.Text = "檔案";
-            // 
-            // menuFileNew
-            // 
-            this.menuFileNew.Name = "menuFileNew";
-            this.menuFileNew.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.N)));
-            this.menuFileNew.Size = new System.Drawing.Size(167, 22);
-            this.menuFileNew.Text = "新增";
-            this.menuFileNew.Click += new System.EventHandler(this.MenuFileNew_Click);
-            // 
-            // menuFileOpen
-            // 
-            this.menuFileOpen.Name = "menuFileOpen";
-            this.menuFileOpen.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.O)));
-            this.menuFileOpen.Size = new System.Drawing.Size(167, 22);
-            this.menuFileOpen.Text = "開啟舊檔";
+
             // 
             // toolStripSeparator1
             // 
             this.toolStripSeparator1.Name = "toolStripSeparator1";
             this.toolStripSeparator1.Size = new System.Drawing.Size(164, 6);
-            // 
-            // menuRecentFiles
-            // 
-            this.menuRecentFiles.Name = "menuRecentFiles";
-            this.menuRecentFiles.Size = new System.Drawing.Size(167, 22);
-            this.menuRecentFiles.Text = "最近的檔案";
+
             // 
             // toolStripSeparator2
             // 
             this.toolStripSeparator2.Name = "toolStripSeparator2";
             this.toolStripSeparator2.Size = new System.Drawing.Size(164, 6);
-            // 
-            // menuFileExit
-            // 
-            this.menuFileExit.Name = "menuFileExit";
-            this.menuFileExit.Size = new System.Drawing.Size(167, 22);
-            this.menuFileExit.Text = "結束";
-            this.menuFileExit.Click += new System.EventHandler(this.MenuFileExit_Click);
+
             // 
             // menuSettings
             // 
@@ -252,13 +227,7 @@
             this.menuSettings.Name = "menuSettings";
             this.menuSettings.Size = new System.Drawing.Size(43, 20);
             this.menuSettings.Text = "設定";
-            // 
-            // menuSettingsTemplate
-            // 
-            this.menuSettingsTemplate.Name = "menuSettingsTemplate";
-            this.menuSettingsTemplate.Size = new System.Drawing.Size(122, 22);
-            this.menuSettingsTemplate.Text = "範本設定";
-            this.menuSettingsTemplate.Click += new System.EventHandler(this.MenuSettingsTemplate_Click);
+
             // 
             // menuHelp
             // 
