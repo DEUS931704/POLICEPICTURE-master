@@ -10,6 +10,7 @@ using System.Text.RegularExpressions;
 using POLICEPICTURE;
 using System.Net;
 using System.Drawing.Imaging;
+using System.Linq;
 
 namespace POLICEPICTURE
 {
@@ -137,10 +138,52 @@ namespace POLICEPICTURE
                             formattedTime = time;
                         }
                     }
-                    
+
+                    // 處理描述欄位 %%Description%%
+                    string descriptionText = string.Empty;
+
+                    // 如果有照片，智能處理描述欄位
+                    if (photos.Count > 0)
+                    {
+                        // 1. 檢查是否所有照片都有相同的描述
+                        bool allSameDescription = true;
+                        string firstDesc = photos[0].Description ?? "";
+
+                        foreach (var photo in photos)
+                        {
+                            if (photo.Description != firstDesc)
+                            {
+                                allSameDescription = false;
+                                break;
+                            }
+                        }
+
+                        // 如果所有照片描述相同且不為空，使用該描述
+                        if (allSameDescription && !string.IsNullOrEmpty(firstDesc))
+                        {
+                            descriptionText = firstDesc;
+                            Logger.Log($"所有照片使用相同描述: {descriptionText}", Logger.LogLevel.Debug);
+                        }
+                        // 否則，生成一個通用描述
+                        else
+                        {
+                            int photosWithDesc = photos.Count(p => !string.IsNullOrEmpty(p.Description));
+
+                            if (photosWithDesc > 0)
+                            {
+                                descriptionText = $"本案共{photos.Count}張照片，每張照片附有個別說明。";
+                                Logger.Log($"生成通用描述，{photosWithDesc}/{photos.Count}張照片有描述", Logger.LogLevel.Debug);
+                            }
+                            else
+                            {
+                                descriptionText = $"本案共{photos.Count}張照片。";
+                                Logger.Log("所有照片均無描述", Logger.LogLevel.Debug);
+                            }
+                        }
+                    }
 
                     // 批量替換文檔中的佔位符，提高性能
-                   Dictionary<string, string> replacements = new Dictionary<string, string>
+                    Dictionary<string, string> replacements = new Dictionary<string, string>
                     {
                         // 處理單位顯示，確保刑事警察大隊科偵隊等可以正確顯示
                         { "%%UNIT%%", unit?.Replace(" ", "\n") ?? string.Empty }, // 主單位和子單位間使用換行符
@@ -148,11 +191,10 @@ namespace POLICEPICTURE
                         { "%%TIME%%", formattedTime },
                         { "%%ADDRESS%%", location ?? string.Empty },
                         { "%%NAME%%", photographer ?? string.Empty },
-                        { "%%Description%%", string.Empty },
-                        // 添加其他需要替換的佔位符
-                        { "%%DATE%%", string.Empty },
+                        { "%%Description%%", descriptionText },
+                        { "%%DATE%%", DateTime.Now.ToString("yyyy年MM月dd日") }, // 填充當前日期
                         { "%%SERIAL%%", string.Empty },
-                        { "%%NUMBER%%", string.Empty }
+                        { "%%NUMBER%%", photos.Count.ToString() } // 填充照片數量
                     };
 
                     // 批量替換所有佔位符
@@ -486,10 +528,21 @@ namespace POLICEPICTURE
                     // 在標記前插入描述
                     Range descriptionRange = markerRange.Duplicate;
                     descriptionRange.Collapse(WdCollapseDirection.wdCollapseStart);
-                    descriptionRange.InsertBefore(photo.Description + "\r\n");
-                    descriptionRange.Bold = 1; // 加粗描述
-                }
 
+                    // 使用格式化的段落插入描述
+                    Paragraph descPara = descriptionRange.Paragraphs.Add();
+                    descPara.Range.Text = photo.Description;
+                    descPara.Range.Bold = 1; // 加粗描述
+
+                    // 設置段落格式
+                    descPara.Format.Alignment = WdParagraphAlignment.wdAlignParagraphCenter;
+                    descPara.Format.SpaceAfter = 6; // 添加段落後間距
+
+                    // 插入換行
+                    descPara.Range.InsertParagraphAfter();
+
+                    Logger.Log($"已添加照片描述: {photo.Description}", Logger.LogLevel.Debug);
+                }
                 // 獲取單元格的大小以限制圖片尺寸
                 float maxWidth = 400; // 默認最大寬度
                 float maxHeight = 300; // 默認最大高度

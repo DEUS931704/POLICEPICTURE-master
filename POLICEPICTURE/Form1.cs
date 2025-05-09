@@ -148,6 +148,9 @@ namespace POLICEPICTURE
             lvPhotos.VirtualMode = true;
             lvPhotos.RetrieveVirtualItem += LvPhotos_RetrieveVirtualItem;
 
+            // 啟用多選功能
+            lvPhotos.MultiSelect = true;
+
             // 啟用拖放功能，用於照片排序
             lvPhotos.AllowDrop = true;
             lvPhotos.ItemDrag += LvPhotos_ItemDrag;
@@ -156,6 +159,16 @@ namespace POLICEPICTURE
 
             // 添加右鍵菜單
             lvPhotos.ContextMenuStrip = CreatePhotoContextMenu();
+
+            // 添加多選提示標籤
+            Label lblMultiSelect = new Label
+            {
+                Text = "提示：按住 Ctrl 鍵可多選照片",
+                AutoSize = true,
+                ForeColor = System.Drawing.Color.DarkBlue,
+                Location = new System.Drawing.Point(5, 3)
+            };
+            panel1.Controls.Add(lblMultiSelect);
         }
 
         /// <summary>
@@ -176,7 +189,7 @@ namespace POLICEPICTURE
             menu.Items.Add(addItem);
 
             // 移除照片
-            ToolStripMenuItem removeItem = new ToolStripMenuItem("移除選中照片");
+            ToolStripMenuItem removeItem = new ToolStripMenuItem();
             removeItem.Click += (s, e) => BtnRemovePhoto_Click(s, e);
             menu.Items.Add(removeItem);
 
@@ -240,6 +253,19 @@ namespace POLICEPICTURE
             {
                 bool hasPhotos = PhotoManager.Instance.Count > 0;
                 bool hasSelection = lvPhotos.SelectedIndices.Count > 0;
+                bool hasMultipleSelection = lvPhotos.SelectedIndices.Count > 1;
+
+                // 根據選擇數量調整文字
+                if (hasMultipleSelection)
+                {
+                    removeItem.Text = $"移除選中的 {lvPhotos.SelectedIndices.Count} 張照片";
+                }
+                else
+                {
+                    removeItem.Text = "移除選中照片";
+                }
+
+                removeItem.Enabled = hasSelection;
 
                 removeItem.Enabled = hasSelection;
                 sortMenu.Enabled = hasPhotos && PhotoManager.Instance.Count > 1;
@@ -863,20 +889,62 @@ namespace POLICEPICTURE
         /// </summary>
         private void BtnRemovePhoto_Click(object sender, EventArgs e)
         {
-            if (lvPhotos.SelectedIndices.Count > 0)
+            // 檢查是否有選中的照片
+            if (lvPhotos.SelectedIndices.Count == 0)
             {
-                int index = lvPhotos.SelectedIndices[0];
+                MessageBox.Show("請先選擇要移除的照片", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
 
-                // 使用PhotoManager移除照片
-                if (PhotoManager.Instance.RemovePhoto(index))
-                {
-                    MessageBox.Show("照片已移除", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    Logger.Log($"已移除索引為 {index} 的照片");
-                }
+            // 確認刪除 - 根據選擇數量顯示不同確認訊息
+            string message;
+            if (lvPhotos.SelectedIndices.Count == 1)
+            {
+                message = "確定要移除選中的照片嗎？";
             }
             else
             {
-                MessageBox.Show("請先選擇要移除的照片", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                message = $"確定要移除選中的 {lvPhotos.SelectedIndices.Count} 張照片嗎？";
+            }
+
+            if (MessageBox.Show(message, "確認", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
+            {
+                return;
+            }
+
+            // 獲取所有選中項的索引（轉換為列表並按降序排序，避免刪除時索引改變）
+            List<int> indicesToRemove = new List<int>();
+            foreach (int index in lvPhotos.SelectedIndices)
+            {
+                indicesToRemove.Add(index);
+            }
+
+            // 降序排序以避免刪除時索引變化影響操作
+            indicesToRemove.Sort((a, b) => b.CompareTo(a));
+
+            // 批次刪除
+            int removedCount = 0;
+            foreach (int index in indicesToRemove)
+            {
+                if (PhotoManager.Instance.RemovePhoto(index))
+                {
+                    removedCount++;
+                }
+            }
+
+            // 顯示刪除結果
+            if (removedCount > 0)
+            {
+                string resultMessage = (lvPhotos.SelectedIndices.Count == 1)
+                    ? "照片已移除"
+                    : $"已成功移除 {removedCount} 張照片";
+
+                MessageBox.Show(resultMessage, "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                Logger.Log($"已移除 {removedCount} 張照片", Logger.LogLevel.Info);
+            }
+            else if (indicesToRemove.Count > 0)
+            {
+                MessageBox.Show("移除照片失敗", "錯誤", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
