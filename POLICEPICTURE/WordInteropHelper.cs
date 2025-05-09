@@ -142,43 +142,31 @@ namespace POLICEPICTURE
                     // 處理描述欄位 %%Description%%
                     string descriptionText = string.Empty;
 
-                    // 如果有照片，智能處理描述欄位
+                    // 如果有照片，直接使用最後選擇的照片描述填入 %%Description%% 欄位
                     if (photos.Count > 0)
                     {
-                        // 1. 檢查是否所有照片都有相同的描述
-                        bool allSameDescription = true;
-                        string firstDesc = photos[0].Description ?? "";
-
-                        foreach (var photo in photos)
+                        // 找出有描述的最後一張照片
+                        PhotoItem lastPhotoWithDesc = null;
+                        for (int i = photos.Count - 1; i >= 0; i--)
                         {
-                            if (photo.Description != firstDesc)
+                            if (!string.IsNullOrEmpty(photos[i].Description))
                             {
-                                allSameDescription = false;
+                                lastPhotoWithDesc = photos[i];
                                 break;
                             }
                         }
 
-                        // 如果所有照片描述相同且不為空，使用該描述
-                        if (allSameDescription && !string.IsNullOrEmpty(firstDesc))
+                        // 如果找到有描述的照片，使用它的描述
+                        if (lastPhotoWithDesc != null)
                         {
-                            descriptionText = firstDesc;
-                            Logger.Log($"所有照片使用相同描述: {descriptionText}", Logger.LogLevel.Debug);
+                            descriptionText = lastPhotoWithDesc.Description;
+                            Logger.Log($"使用最後修改的照片描述: {descriptionText}", Logger.LogLevel.Debug);
                         }
-                        // 否則，生成一個通用描述
+                        // 否則使用簡單描述
                         else
                         {
-                            int photosWithDesc = photos.Count(p => !string.IsNullOrEmpty(p.Description));
-
-                            if (photosWithDesc > 0)
-                            {
-                                descriptionText = $"本案共{photos.Count}張照片，每張照片附有個別說明。";
-                                Logger.Log($"生成通用描述，{photosWithDesc}/{photos.Count}張照片有描述", Logger.LogLevel.Debug);
-                            }
-                            else
-                            {
-                                descriptionText = $"本案共{photos.Count}張照片。";
-                                Logger.Log("所有照片均無描述", Logger.LogLevel.Debug);
-                            }
+                            descriptionText = $"本案共{photos.Count}張照片。";
+                            Logger.Log("所有照片均無描述，使用默認描述", Logger.LogLevel.Debug);
                         }
                     }
 
