@@ -163,11 +163,15 @@ namespace POLICEPICTURE
         /// </summary>
         private ContextMenuStrip CreatePhotoContextMenu()
         {
+            // 使用物件初始化器來創建菜單
             ContextMenuStrip menu = new ContextMenuStrip();
 
             // 添加照片
-            ToolStripMenuItem addItem = new ToolStripMenuItem("添加照片");
-            addItem.Image = SystemIcons.Application.ToBitmap(); // 或使用自定義圖標
+            ToolStripMenuItem addItem = new ToolStripMenuItem
+            {
+                Text = "添加照片",
+                Image = SystemIcons.Application.ToBitmap()
+            };
             addItem.Click += (s, e) => BtnAddPhoto_Click(s, e);
             menu.Items.Add(addItem);
 
@@ -653,17 +657,46 @@ namespace POLICEPICTURE
                         settings.LastSaveDirectory = Path.GetDirectoryName(saveFilePath);
                         settings.Save();
 
-                        // 查找有效的模板路徑（使用應用程序目錄）
-                        string appPath = Application.StartupPath;
-                        string templatePath = Path.Combine(appPath, "template.docx");
+                        // 首先嘗試在應用程式目錄中查找範本文件
+                        string templatePath = Path.Combine(Application.StartupPath, "template.docx");
 
-                        // 檢查範本是否存在
+                        // 記錄查找路徑
+                        Logger.Log($"嘗試查找範本文件，路徑: {templatePath}", Logger.LogLevel.Info);
+
+                        // 如果文件不存在，嘗試從嵌入資源提取
                         if (!File.Exists(templatePath))
                         {
-                            Logger.Log("找不到範本檔案", Logger.LogLevel.Error);
-                            MessageBox.Show($"找不到範本檔案！\n\n請確認應用程式目錄下是否有template.docx檔案。",
-                                "錯誤", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                            return false;
+                            Logger.Log("應用程式目錄中找不到範本文件，嘗試從嵌入資源提取", Logger.LogLevel.Info);
+
+                            // 從嵌入資源中提取範本文件
+                            string extractedTemplatePath = EmbeddedResourceHelper.ExtractTemplateFile();
+
+                            if (!string.IsNullOrEmpty(extractedTemplatePath))
+                            {
+                                Logger.Log($"成功從嵌入資源提取範本文件: {extractedTemplatePath}", Logger.LogLevel.Info);
+                                templatePath = extractedTemplatePath;
+                            }
+                            else
+                            {
+                                // 記錄詳細錯誤信息
+                                Logger.Log("無法從嵌入資源提取範本文件，列出所有可用的嵌入資源:", Logger.LogLevel.Error);
+                                var resourceNames = EmbeddedResourceHelper.GetEmbeddedResourceNames();
+
+                                if (resourceNames.Count == 0)
+                                {
+                                    Logger.Log("專案中沒有嵌入資源", Logger.LogLevel.Error);
+                                }
+
+                                // 顯示錯誤訊息
+                                MessageBox.Show("找不到範本檔案！請確認應用程式目錄下是否有template.docx檔案，" +
+                                               "或確認範本是否正確設定為嵌入資源。",
+                                               "錯誤", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                                return false;
+                            }
+                        }
+                        else
+                        {
+                            Logger.Log($"在應用程式目錄中找到範本文件: {templatePath}", Logger.LogLevel.Info);
                         }
 
                         // 顯示進度表單
@@ -701,7 +734,7 @@ namespace POLICEPICTURE
 
                                     UpdateStatusBar("文件已成功生成");
                                     MessageBox.Show($"文件已成功生成！\n儲存路徑: {saveFilePath}", "成功", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                                    Logger.Log($"文件已成功生成: {saveFilePath}");
+                                    Logger.Log($"文件已成功生成: {saveFilePath}", Logger.LogLevel.Info);
 
                                     // 詢問是否開啟已儲存的文件
                                     if (MessageBox.Show("是否立即開啟文件？", "確認", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
@@ -714,6 +747,22 @@ namespace POLICEPICTURE
                                         {
                                             Logger.Log($"無法開啟已生成的文件: {ex.Message}", Logger.LogLevel.Error);
                                             MessageBox.Show($"無法開啟文件: {ex.Message}", "錯誤", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                                        }
+                                    }
+
+                                    // 如果使用的是臨時提取的範本文件，嘗試刪除它
+                                    if (templatePath != Path.Combine(Application.StartupPath, "template.docx") &&
+                                        templatePath.StartsWith(Path.GetTempPath()))
+                                    {
+                                        try
+                                        {
+                                            File.Delete(templatePath);
+                                            Logger.Log($"已刪除臨時範本文件: {templatePath}", Logger.LogLevel.Debug);
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            // 忽略刪除臨時文件的錯誤
+                                            Logger.Log($"刪除臨時範本文件時發生錯誤: {ex.Message}", Logger.LogLevel.Warning);
                                         }
                                     }
                                 }
