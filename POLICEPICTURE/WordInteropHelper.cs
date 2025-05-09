@@ -139,35 +139,12 @@ namespace POLICEPICTURE
                         }
                     }
 
-                    // 處理描述欄位 %%Description%%
-                    string descriptionText = string.Empty;
-
-                    // 如果有照片，直接使用最後選擇的照片描述填入 %%Description%% 欄位
+                    // 處理描述欄位 %%Description%% - 使用默認值作為備用
+                    string defaultDescriptionText = string.Empty;
                     if (photos.Count > 0)
                     {
-                        // 找出有描述的最後一張照片
-                        PhotoItem lastPhotoWithDesc = null;
-                        for (int i = photos.Count - 1; i >= 0; i--)
-                        {
-                            if (!string.IsNullOrEmpty(photos[i].Description))
-                            {
-                                lastPhotoWithDesc = photos[i];
-                                break;
-                            }
-                        }
-
-                        // 如果找到有描述的照片，使用它的描述
-                        if (lastPhotoWithDesc != null)
-                        {
-                            descriptionText = lastPhotoWithDesc.Description;
-                            Logger.Log($"使用最後修改的照片描述: {descriptionText}", Logger.LogLevel.Debug);
-                        }
-                        // 否則使用簡單描述
-                        else
-                        {
-                            descriptionText = $"本案共{photos.Count}張照片。";
-                            Logger.Log("所有照片均無描述，使用默認描述", Logger.LogLevel.Debug);
-                        }
+                        defaultDescriptionText = $"本案共{photos.Count}張照片。";
+                        Logger.Log($"設置全局默認描述文字: {defaultDescriptionText}", Logger.LogLevel.Debug);
                     }
 
                     // 批量替換文檔中的佔位符，提高性能
@@ -179,7 +156,7 @@ namespace POLICEPICTURE
                         { "%%TIME%%", formattedTime },
                         { "%%ADDRESS%%", location ?? string.Empty },
                         { "%%NAME%%", photographer ?? string.Empty },
-                        { "%%Description%%", descriptionText },
+                        { "%%Description%%", defaultDescriptionText  },
                         { "%%DATE%%", DateTime.Now.ToString("yyyy年MM月dd日") }, // 填充當前日期
                         { "%%SERIAL%%", string.Empty },
                         { "%%NUMBER%%", photos.Count.ToString() } // 填充照片數量
@@ -720,6 +697,9 @@ namespace POLICEPICTURE
                         // 不要因為無法刪除臨時文件而中斷處理
                     }
                 }
+
+                // 替換描述標記為當前照片的描述
+                ReplaceDescriptionMarkerInCellWithPhotoDescription(cell, photo);
             }
             catch (Exception ex)
             {
@@ -851,6 +831,46 @@ namespace POLICEPICTURE
             {
                 Logger.Log($"安全獲取表格單元格時出錯: 行={rowIndex}, 列={colIndex}, 錯誤:{ex.Message}", Logger.LogLevel.Warning);
                 return null;
+            }
+        }
+
+        /// <summary>
+        /// 替換單元格中的 %%Description%% 標記為照片的描述
+        /// </summary>
+        private static void ReplaceDescriptionMarkerInCellWithPhotoDescription(Cell cell, PhotoItem photo)
+        {
+            try
+            {
+                // 檢查單元格是否包含 %%Description%% 標記
+                if (cell.Range.Text.Contains("%%Description%%"))
+                {
+                    // 準備替換文本 - 如果照片沒有描述則使用空字符串
+                    string descriptionText = !string.IsNullOrEmpty(photo.Description) ? photo.Description : "";
+
+                    // 替換單元格中的 %%Description%% 標記
+                    cell.Range.Find.ClearFormatting();
+                    cell.Range.Find.Replacement.ClearFormatting();
+                    cell.Range.Find.Text = "%%Description%%";
+                    cell.Range.Find.Replacement.Text = descriptionText;
+
+                    // 執行替換
+                    cell.Range.Find.Execute(
+                        Replace: WdReplace.wdReplaceAll,
+                        Forward: true,
+                        MatchCase: false,
+                        MatchWholeWord: false,
+                        MatchWildcards: false,
+                        MatchSoundsLike: false,
+                        MatchAllWordForms: false,
+                        Wrap: WdFindWrap.wdFindContinue,
+                        Format: false);
+
+                    Logger.Log($"已替換單元格中的描述標記為: {descriptionText}", Logger.LogLevel.Debug);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"替換描述標記時出錯: {ex.Message}", Logger.LogLevel.Error);
             }
         }
 
