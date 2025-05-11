@@ -156,7 +156,7 @@ namespace POLICEPICTURE
                         { "%%TIME%%", formattedTime },
                         { "%%ADDRESS%%", location ?? string.Empty },
                         { "%%NAME%%", photographer ?? string.Empty },
-                        { "%%Description%%", defaultDescriptionText  },
+                        { "%%Description%%", "" },
                         { "%%DATE%%", DateTime.Now.ToString("yyyy年MM月dd日") }, // 填充當前日期
                         { "%%SERIAL%%", string.Empty },
                         { "%%NUMBER%%", photos.Count.ToString() } // 填充照片數量
@@ -483,31 +483,13 @@ namespace POLICEPICTURE
                 if (!File.Exists(photo.FilePath))
                 {
                     Logger.Log($"照片文件不存在: {photo.FilePath}", Logger.LogLevel.Error);
-                    markerRange.Text = "[照片文件不存在]";
+                    SafeReplaceText(markerRange, "[照片文件不存在]");
                     return;
                 }
 
-                // 添加照片描述
-                if (!string.IsNullOrEmpty(photo.Description))
-                {
-                    // 在標記前插入描述
-                    Range descriptionRange = markerRange.Duplicate;
-                    descriptionRange.Collapse(WdCollapseDirection.wdCollapseStart);
+                // 處理描述 - 使用更安全的方法
+                ProcessDescriptionInCell(cell, photo);
 
-                    // 使用格式化的段落插入描述
-                    Paragraph descPara = descriptionRange.Paragraphs.Add();
-                    descPara.Range.Text = photo.Description;
-                    descPara.Range.Bold = 1; // 加粗描述
-
-                    // 設置段落格式
-                    descPara.Format.Alignment = WdParagraphAlignment.wdAlignParagraphCenter;
-                    descPara.Format.SpaceAfter = 6; // 添加段落後間距
-
-                    // 插入換行
-                    descPara.Range.InsertParagraphAfter();
-
-                    Logger.Log($"已添加照片描述: {photo.Description}", Logger.LogLevel.Debug);
-                }
                 // 獲取單元格的大小以限制圖片尺寸
                 float maxWidth = 400; // 默認最大寬度
                 float maxHeight = 300; // 默認最大高度
@@ -548,11 +530,12 @@ namespace POLICEPICTURE
                     // 判斷是否為垂直照片 - 高度大於寬度
                     isVertical = img.Height > img.Width;
 
+                    // 記錄照片資訊
                     Logger.Log($"照片 {Path.GetFileName(photo.FilePath)} 尺寸: {img.Width}x{img.Height}, " +
                               (isVertical ? "垂直照片" : "水平照片"), Logger.LogLevel.Debug);
 
-                    // 修改: 降低旋轉閾值，從1.5倍降低到1.2倍，讓更多垂直照片可以旋轉
-                    if (isVertical && img.Height > img.Width * 1.2) // 降低閾值，更多垂直照片會被旋轉
+                    // 降低旋轉閾值，從1.5倍降低到1.2倍，讓更多垂直照片可以旋轉
+                    if (isVertical && img.Height > img.Width * 1.2)
                     {
                         try
                         {
@@ -560,12 +543,12 @@ namespace POLICEPICTURE
                             string tempDir = Path.GetTempPath();
                             Directory.CreateDirectory(tempDir);
 
-                            // 修改: 創建更簡單的唯一臨時文件名
+                            // 創建更簡單的唯一臨時文件名
                             tempImagePath = Path.Combine(
                                 tempDir,
                                 $"rotated_{Guid.NewGuid()}.jpg"); // 簡化文件名並強制使用jpg格式
 
-                            // 修改: 使用更簡單可靠的旋轉方法
+                            // 使用更簡單可靠的旋轉方法
                             using (Bitmap rotated = new Bitmap(img))
                             {
                                 // 使用RotateFlip方法直接旋轉90度，比手動變換座標更可靠
@@ -592,16 +575,18 @@ namespace POLICEPICTURE
                                     }
                                 }
 
-                                // 修改: 在旋轉後交換原始寬高，確保後續計算正確
-                                (originalWidth, originalHeight) = (originalHeight, originalWidth);
+                                // 在旋轉後交換原始寬高，確保後續計算正確
+                                var temp = originalWidth;
+                                originalWidth = originalHeight;
+                                originalHeight = temp;
 
                                 Logger.Log($"已旋轉照片並保存到臨時文件: {tempImagePath}", Logger.LogLevel.Info);
                             }
                         }
                         catch (Exception ex)
                         {
-                            // 修改: 添加更詳細的錯誤日誌
-                            Logger.Log($"旋轉照片時發生詳細錯誤: {ex.Message}\n調用堆疊: {ex.StackTrace}", Logger.LogLevel.Error);
+                            // 添加更詳細的錯誤日誌
+                            Logger.Log($"旋轉照片時發生詳細錯誤: {ex.Message}", Logger.LogLevel.Error);
                             tempImagePath = null; // 重置臨時文件路徑，確保後續使用原始文件
                         }
                     }
@@ -614,7 +599,6 @@ namespace POLICEPICTURE
                 if (isVertical)
                 {
                     // 對於垂直照片，增加最大高度限制
-                    // 修改: 調整垂直照片的高度計算，從1.5倍降低到1.2倍
                     if (originalHeight > originalWidth * 1.2) // 如果高度顯著大於寬度
                     {
                         // 為垂直照片增加高度，但設定上限
@@ -631,8 +615,8 @@ namespace POLICEPICTURE
                 finalWidth = originalWidth * ratio;
                 finalHeight = originalHeight * ratio;
 
-                // 插入圖片
-                markerRange.Text = ""; // 清除標記
+                // 清除標記
+                SafeReplaceText(markerRange, "");
 
                 // 如果創建了旋轉的臨時文件，則使用臨時文件
                 string imagePathToUse = tempImagePath != null && File.Exists(tempImagePath) ?
@@ -645,41 +629,61 @@ namespace POLICEPICTURE
                     imagePathToUse = photo.FilePath;
                 }
 
-                // 修改: 添加更多日誌記錄
+                // 添加更多日誌記錄
                 Logger.Log($"插入圖片，使用文件: {imagePathToUse}, 尺寸: {finalWidth}x{finalHeight}", Logger.LogLevel.Debug);
 
                 // 使用更安全的方式插入圖片
                 try
                 {
-                    InlineShape shape = markerRange.InlineShapes.AddPicture(
-                        FileName: imagePathToUse,
-                        LinkToFile: false,
-                        SaveWithDocument: true);
-
-                    // 設置圖片尺寸
-                    shape.Width = finalWidth;
-                    shape.Height = finalHeight;
-
-                    // 居中圖片
-                    shape.Range.ParagraphFormat.Alignment = WdParagraphAlignment.wdAlignParagraphCenter;
-                }
-                catch (Exception ex)
-                {
-                    Logger.Log($"插入圖片失敗，嘗試備用方法: {ex.Message}", Logger.LogLevel.Warning);
-
-                    // 備用方法: 使用標準範圍插入
+                    // 使用 try-catch 分別控制每個 COM 操作
+                    InlineShape shape = null;
                     try
                     {
-                        markerRange.InlineShapes.AddPicture(
-                            FileName: photo.FilePath, // 使用原始文件作為備用
+                        shape = markerRange.InlineShapes.AddPicture(
+                            FileName: imagePathToUse,
                             LinkToFile: false,
                             SaveWithDocument: true);
                     }
-                    catch (Exception backupEx)
+                    catch (Exception ex)
                     {
-                        Logger.Log($"備用插入方法也失敗: {backupEx.Message}", Logger.LogLevel.Error);
-                        markerRange.Text = $"[無法插入照片: {Path.GetFileName(photo.FilePath)}]";
+                        Logger.Log($"插入圖片失敗: {ex.Message}", Logger.LogLevel.Error);
+                        SafeReplaceText(markerRange, $"[無法插入照片]");
+                        return;
                     }
+
+                    // 設置圖片尺寸
+                    try
+                    {
+                        if (shape != null)
+                        {
+                            shape.Width = finalWidth;
+                            shape.Height = finalHeight;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Log($"設置圖片尺寸失敗: {ex.Message}", Logger.LogLevel.Warning);
+                        // 繼續執行，不中斷處理
+                    }
+
+                    // 居中圖片
+                    try
+                    {
+                        if (shape != null && shape.Range != null)
+                        {
+                            shape.Range.ParagraphFormat.Alignment = WdParagraphAlignment.wdAlignParagraphCenter;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Log($"設置圖片居中失敗: {ex.Message}", Logger.LogLevel.Warning);
+                        // 繼續執行，不中斷處理
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logger.Log($"處理圖片時發生未處理的異常: {ex.Message}", Logger.LogLevel.Error);
+                    SafeReplaceText(markerRange, $"[照片處理錯誤]");
                 }
 
                 // 如果使用了臨時文件，在插入完成後刪除
@@ -697,16 +701,192 @@ namespace POLICEPICTURE
                         // 不要因為無法刪除臨時文件而中斷處理
                     }
                 }
-
-                // 替換描述標記為當前照片的描述
-                ReplaceDescriptionMarkerInCellWithPhotoDescription(cell, photo);
             }
             catch (Exception ex)
             {
-                Logger.Log($"在單元格中處理照片時出錯: {ex.Message}\n{ex.StackTrace}", Logger.LogLevel.Error);
-                markerRange.Text = $"[照片錯誤: {ex.Message}]";
-                markerRange.Bold = 1;
-                markerRange.Font.Color = WdColor.wdColorRed;
+                Logger.Log($"在單元格中處理照片時出錯: {ex.Message}", Logger.LogLevel.Error);
+                SafeReplaceText(markerRange, $"[照片錯誤]");
+            }
+        }
+
+        /// <summary>
+        /// 在單元格中處理描述標記
+        /// </summary>
+        private static void ProcessDescriptionInCell(Cell cell, PhotoItem photo)
+        {
+            if (cell == null || photo == null)
+                return;
+
+            try
+            {
+                // 獲取單元格文本
+                string cellText = "";
+                try
+                {
+                    cellText = cell.Range.Text;
+                }
+                catch (Exception ex)
+                {
+                    Logger.Log($"獲取單元格文本時出錯: {ex.Message}", Logger.LogLevel.Warning);
+                    return;
+                }
+
+                // 檢查是否包含描述標記
+                if (cellText.Contains("%%Description%%"))
+                {
+                    // 使用安全的替換方法
+                    try
+                    {
+                        // 獲取照片描述，如果為空則使用空字符串
+                        string description = !string.IsNullOrEmpty(photo.Description) ? photo.Description : "";
+
+                        // 使用安全的替換方法
+                        SafeReplaceTextInCell(cell, "%%Description%%", description);
+
+                        Logger.Log($"已替換描述標記為: {description}", Logger.LogLevel.Debug);
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Log($"替換描述標記時出錯: {ex.Message}", Logger.LogLevel.Error);
+                    }
+                }
+                else if (!string.IsNullOrEmpty(photo.Description))
+                {
+                    // 如果沒有描述標記但有描述，嘗試在單元格頂部添加描述
+                    try
+                    {
+                        // 創建新的範圍在單元格開始處
+                        Range descRange = cell.Range.Duplicate;
+                        descRange.Collapse(WdCollapseDirection.wdCollapseStart);
+
+                        // 插入描述文本
+                        descRange.Text = photo.Description + "\n";
+
+                        // 設置格式
+                        try
+                        {
+                            descRange.Bold = 1;
+                            descRange.ParagraphFormat.Alignment = WdParagraphAlignment.wdAlignParagraphCenter;
+                        }
+                        catch
+                        {
+                            // 忽略格式設置錯誤
+                        }
+
+                        Logger.Log($"已在單元格頂部添加描述: {photo.Description}", Logger.LogLevel.Debug);
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Log($"在單元格頂部添加描述時出錯: {ex.Message}", Logger.LogLevel.Warning);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"處理描述標記時發生錯誤: {ex.Message}", Logger.LogLevel.Error);
+            }
+        }
+
+        /// <summary>
+        /// 安全地替換文本，避免 COM 例外
+        /// </summary>
+        private static void SafeReplaceText(Range range, string newText)
+        {
+            if (range == null)
+                return;
+
+            try
+            {
+                range.Text = newText;
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"安全替換文本時出錯: {ex.Message}", Logger.LogLevel.Error);
+            }
+        }
+
+        /// <summary>
+        /// 安全地在單元格中替換指定文本
+        /// </summary>
+        private static void SafeReplaceTextInCell(Cell cell, string oldText, string newText)
+        {
+            if (cell == null || string.IsNullOrEmpty(oldText))
+                return;
+
+            try
+            {
+                // 直接使用字符串替換
+                string cellText = cell.Range.Text;
+                string newCellText = cellText.Replace(oldText, newText);
+                cell.Range.Text = newCellText;
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"安全替換單元格文本時出錯: {ex.Message}", Logger.LogLevel.Error);
+
+                // 使用備用方法
+                try
+                {
+                    // 嘗試使用 Find 對象
+                    cell.Range.Find.ClearFormatting();
+                    cell.Range.Find.Replacement.ClearFormatting();
+                    cell.Range.Find.Text = oldText;
+                    cell.Range.Find.Replacement.Text = newText;
+                    cell.Range.Find.Execute(Replace: WdReplace.wdReplaceAll);
+                }
+                catch
+                {
+                    // 忽略備用方法失敗，已經記錄了主要錯誤
+                }
+            }
+        }
+
+        /// <summary>
+        /// 在範圍中查找並替換文本
+        /// </summary>
+        private static void FindAndReplaceInRange(Range range, string findText, string replaceText)
+        {
+            try
+            {
+                if (range == null || string.IsNullOrEmpty(findText))
+                {
+                    return;
+                }
+
+                // 設置查找和替換選項
+                range.Find.ClearFormatting();
+                range.Find.Replacement.ClearFormatting();
+                range.Find.Text = findText;
+                range.Find.Replacement.Text = replaceText;
+
+                // 執行替換
+                range.Find.Execute(
+                    Replace: WdReplace.wdReplaceAll,
+                    Forward: true,
+                    MatchCase: false,
+                    MatchWholeWord: false,
+                    MatchWildcards: false,
+                    MatchSoundsLike: false,
+                    MatchAllWordForms: false,
+                    Wrap: WdFindWrap.wdFindContinue,
+                    Format: false);
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"在範圍中查找並替換文本時出錯: {ex.Message}", Logger.LogLevel.Warning);
+
+                // 備用方法: 手動替換
+                try
+                {
+                    if (range.Text.Contains(findText))
+                    {
+                        range.Text = range.Text.Replace(findText, replaceText);
+                    }
+                }
+                catch (Exception backupEx)
+                {
+                    Logger.Log($"備用替換方法也失敗: {backupEx.Message}", Logger.LogLevel.Error);
+                }
             }
         }
 
@@ -841,11 +1021,15 @@ namespace POLICEPICTURE
         {
             try
             {
+                // 添加更詳細的日誌
+                Logger.Log($"開始處理單元格中的描述標記，照片描述: '{photo.Description}'", Logger.LogLevel.Debug);
+
                 // 檢查單元格是否包含 %%Description%% 標記
                 if (cell.Range.Text.Contains("%%Description%%"))
                 {
                     // 準備替換文本 - 如果照片沒有描述則使用空字符串
                     string descriptionText = !string.IsNullOrEmpty(photo.Description) ? photo.Description : "";
+                    Logger.Log($"將描述標記替換為: '{descriptionText}'", Logger.LogLevel.Debug);
 
                     // 替換單元格中的 %%Description%% 標記
                     cell.Range.Find.ClearFormatting();

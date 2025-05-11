@@ -476,7 +476,52 @@ namespace POLICEPICTURE
                 int index = lvPhotos.SelectedIndices[0];
                 if (index >= 0 && index < PhotoManager.Instance.Count)
                 {
-                    PhotoManager.Instance.UpdatePhotoDescription(index, txtPhotoDescription.Text);
+                    try
+                    {
+                        // 獲取先前的描述以便記錄變更
+                        string oldDescription = string.Empty;
+                        var photo = PhotoManager.Instance.GetPhoto(index);
+                        if (photo != null)
+                        {
+                            oldDescription = photo.Description;
+                        }
+
+                        // 更新照片描述
+                        PhotoManager.Instance.UpdatePhotoDescription(index, txtPhotoDescription.Text);
+
+                        // 記錄描述更新
+                        Logger.Log($"照片描述已更新 (索引: {index}): '{oldDescription}' -> '{txtPhotoDescription.Text}'",
+                            Logger.LogLevel.Debug);
+
+                        // 確保描述變更被儲存
+                        UpdateStatusBar($"已更新照片 {index + 1} 的描述");
+                    }
+                    catch (Exception ex)
+                    {
+                        // 記錄錯誤但不中斷用戶操作
+                        Logger.Log($"更新照片描述時出錯: {ex.Message}", Logger.LogLevel.Error);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// 更新照片資訊顯示
+        /// </summary>
+        private void UpdatePhotoInfoDisplay(int photoIndex)
+        {
+            if (photoIndex >= 0 && photoIndex < PhotoManager.Instance.Count)
+            {
+                var photo = PhotoManager.Instance.GetPhoto(photoIndex);
+                if (photo != null)
+                {
+                    // 更新照片資訊標籤
+                    string sizeInfo = $"尺寸: {photo.Width}x{photo.Height} 像素 | 大小: {photo.GetFormattedFileSize()}";
+                    if (!string.IsNullOrEmpty(photo.Description))
+                    {
+                        sizeInfo += $" | 描述: {photo.Description}";
+                    }
+                    lblPhotoInfo.Text = sizeInfo;
                 }
             }
         }

@@ -167,17 +167,25 @@ namespace POLICEPICTURE
         {
             if (index >= 0 && index < _photos.Count)
             {
-                // 記錄舊描述，用於記錄
-                string oldDescription = _photos[index].Description;
+                try
+                {
+                    // 記錄舊描述，用於日誌
+                    string oldDescription = _photos[index].Description;
 
-                // 設置新描述
-                _photos[index].Description = description;
+                    // 設置新描述
+                    _photos[index].Description = description;
 
-                // 觸發照片變更事件
-                OnPhotosChanged(PhotoCollectionChangedEventArgs.ChangeType.Add, index, _photos[index]);
+                    // 觸發照片變更事件
+                    OnPhotosChanged(PhotoCollectionChangedEventArgs.ChangeType.Add, index, _photos[index]);
 
-                Logger.Log($"已更新照片描述 (索引: {index}): '{oldDescription}' -> '{description}'", Logger.LogLevel.Debug);
-                return true;
+                    Logger.Log($"已更新照片描述 (索引: {index}): '{oldDescription}' -> '{description}'", Logger.LogLevel.Debug);
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    Logger.Log($"更新照片描述時發生異常: {ex.Message}", Logger.LogLevel.Error);
+                    return false;
+                }
             }
 
             Logger.Log($"更新照片描述失敗，索引無效: {index}", Logger.LogLevel.Warning);
