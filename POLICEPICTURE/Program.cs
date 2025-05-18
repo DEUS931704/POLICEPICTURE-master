@@ -37,7 +37,7 @@ namespace POLICEPICTURE
                 }
                 else
                 {
-                    MessageBox.Show($"{ipMessage}\n\n網域驗證失敗！此應用程式只能在10.108.X.X網域內執行。",
+                    MessageBox.Show($"{ipMessage}\n\n網域驗證失敗！此應用程式只提供新竹市警察局網域內執行。",
                         "IP地址信息", MessageBoxButtons.OK, MessageBoxIcon.Warning);
 
                     // 網域驗證失敗時退出程式

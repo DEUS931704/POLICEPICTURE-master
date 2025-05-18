@@ -627,7 +627,7 @@ namespace POLICEPICTURE
         /// </summary>
         private void MenuHelpAbout_Click(object sender, EventArgs e)
         {
-            MessageBox.Show($"警察照片證據生成器 v{APP_VERSION}\n\n用於生成包含照片的證據文件。\n\n新竹市警察局刑大科偵隊",
+            MessageBox.Show($"警察照片證據生成器 v{APP_VERSION}\n\n用於生成包含照片的證據文件。\n\n新竹市警察局刑大科偵隊\n\n偵查佐蔡明憲",
                 "關於", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
